@@ -10,6 +10,7 @@ const isDark = computed({
 const navItems = [
   { label: 'Home', to: '/', icon: 'i-lucide-home' },
   { label: 'Components', to: '/components', icon: 'i-lucide-layout-grid' },
+  { label: 'Forms', to: '/forms', icon: 'i-lucide-text-cursor-input' },
   { label: 'Todos', to: '/todos', icon: 'i-lucide-check-square' },
 ]
 
