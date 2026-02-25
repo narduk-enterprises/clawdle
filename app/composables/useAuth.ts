@@ -60,6 +60,14 @@ export function useAuth() {
     user.value = null
   }
 
+  async function demoLogin() {
+    const res = await $fetch<{ user: AuthUser }>('/api/auth/demo', {
+      method: 'POST',
+    })
+    user.value = res.user
+    return res.user
+  }
+
   return {
     user: readonly(user) as Readonly<Ref<AuthUser | null>>,
     loggedIn,
@@ -67,6 +75,7 @@ export function useAuth() {
     login,
     signup,
     logout,
+    demoLogin,
     refresh,
   }
 }

@@ -60,15 +60,16 @@
 
         <UButton
           block
-          color="neutral"
+          color="primary"
           variant="soft"
-          icon="i-lucide-apple"
-          disabled
+          icon="i-lucide-sparkles"
+          :loading="demoLoading"
+          @click="handleDemoLogin"
         >
-          Sign in with Apple
+          Try Demo Account
         </UButton>
         <p class="text-xs text-center text-muted">
-          Apple Sign-In requires keys configured in <code>.env</code>
+          Instantly sign in as <code>demo@example.com</code>
         </p>
       </div>
     </template>
@@ -107,10 +108,11 @@
 import { z } from 'zod'
 import type { FormSubmitEvent } from '@nuxt/ui'
 
-const { user, loggedIn, login, signup, logout } = useAuth()
+const { user, loggedIn, login, signup, logout, demoLogin } = useAuth()
 
 const mode = ref<'login' | 'signup'>('login')
 const submitting = ref(false)
+const demoLoading = ref(false)
 const message = ref('')
 const messageType = ref<'error' | 'success'>('success')
 
@@ -165,6 +167,21 @@ async function handleLogout() {
   }
   finally {
     submitting.value = false
+  }
+}
+
+async function handleDemoLogin() {
+  demoLoading.value = true
+  message.value = ''
+  try {
+    await demoLogin()
+    showMessage('Welcome, Demo User!')
+  }
+  catch (err: any) {
+    showMessage(err?.data?.message || 'Demo login failed', 'error')
+  }
+  finally {
+    demoLoading.value = false
   }
 }
 </script>
