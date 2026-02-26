@@ -196,24 +196,52 @@ Pushes to \`main\` are automatically built and deployed via the GitHub Actions C
   console.log(`  ✅ Generated fresh README.`)
 
   // 5. Doppler Registration
-  console.log('\\nStep 5/5: Provisioning Doppler Project...')
+  console.log('\nStep 5/7: Provisioning Doppler Project...')
   console.log(`  Running: doppler projects create ${APP_NAME}`)
   try {
     execSync(`doppler projects create ${APP_NAME} --description "${DISPLAY_NAME} auto-provisioned"`, { encoding: 'utf-8', stdio: 'pipe' })
     console.log(`  ✅ Doppler project created: ${APP_NAME}`)
+    
+    // Bind core cross-project keys
+    execSync(`doppler secrets set CLOUDFLARE_API_TOKEN='\${narduk-enterprise-apps.prd.CLOUDFLARE_API_TOKEN}' CLOUDFLARE_ACCOUNT_ID='\${narduk-enterprise-apps.prd.CLOUDFLARE_ACCOUNT_ID}' POSTHOG_PUBLIC_KEY='\${narduk-analytics.prd.POSTHOG_PUBLIC_KEY}' --project ${APP_NAME} --config prd`, { stdio: 'pipe' })
+    console.log(`  ✅ Synced Cloudflare & PostHog core credentials.`)
   } catch (error: any) {
     const stderr = error.stderr || ''
     if (stderr.includes('already exists')) {
       console.log(`  ⚠️ Doppler project ${APP_NAME} already exists.`)
     } else {
-      console.error(`  ❌ Doppler creation failed: ${stderr || error.message}`)
-      console.error('  Are you logged into Doppler? (doppler login)')
-      process.exit(1)
+      console.warn(`  ⚠️ Doppler creation failed: ${stderr || error.message}`)
     }
   }
 
-  // 6. Cleanup
-  console.log('\\n🧹 Self-Destruct Sequence...')
+  // 6. Analytics Provisioning
+  console.log('\nStep 6/7: Bootstrapping Google Analytics & IndexNow...')
+  try {
+    const toolsDir = path.join(ROOT_DIR, 'tools')
+    if (await fs.stat(path.join(toolsDir, 'setup-analytics.ts')).catch(() => null)) {
+      console.log('  Installing ephemeral dependencies (googleapis, google-auth-library)...')
+      execSync('npm i --no-save googleapis google-auth-library', { encoding: 'utf-8', stdio: 'pipe' })
+      
+      console.log('  Executing Narduk Analytics provisioning pipeline...')
+      execSync(`doppler run --project narduk-analytics --config prd -- npx jiti tools/setup-analytics.ts setup:all`, {
+        stdio: 'inherit',
+        env: {
+          ...process.env,
+          SITE_URL,
+          APP_NAME,
+          GSC_USER_EMAIL: 'narduk@gmail.com'
+        }
+      })
+      console.log(`  ✅ Analytics & Search Console setup successful.`)
+    } else {
+      console.log('  ⚠️ tools/setup-analytics.ts missing. Skipping analytics.')
+    }
+  } catch (error: any) {
+    console.warn(`  ⚠️ Failed to execute analytics pipeline: ${error.message}`)
+  }
+
+  // 7. Cleanup
+  console.log('\nStep 7/7: Self-Destruct Sequence...')
   // Remove this script
   await fs.unlink(path.join(ROOT_DIR, 'tools', 'init.ts'))
   // Attempt to remove tools directory if empty
