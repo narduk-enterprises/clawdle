@@ -67,8 +67,8 @@ function isHighlightedRow(i: number): boolean {
 
 function getDistributionBarClass(i: number) {
   return [
-    getDistCount(i) > 0 ? 'bg-primary' : 'bg-muted',
-    isHighlightedRow(i) ? 'bg-primary/80' : '',
+    getDistCount(i) > 0 ? 'bg-indigo-500 dark:bg-indigo-600' : 'bg-slate-200 dark:bg-slate-700',
+    isHighlightedRow(i) ? '!bg-emerald-500 !dark:bg-emerald-500' : '',
   ]
 }
 
@@ -199,13 +199,13 @@ function handleUpdateOpen(val: boolean) {
         <!-- Share Button -->
         <UButton
           block
-          size="lg"
+          size="xl"
           color="primary"
           icon="i-lucide-share-2"
-          class="font-bold"
+          class="font-display font-bold text-lg rounded-full shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 mt-2 py-3"
           @click="shareResult"
         >
-          Share
+          Share Result
         </UButton>
       </div>
     </template>

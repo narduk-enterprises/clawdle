@@ -23,9 +23,9 @@ const settings = useSettings()
     </div>
 
     <!-- Center: Title -->
-    <div class="flex items-center gap-2">
-      <span class="text-xl" aria-hidden="true">🐾</span>
-      <h1 class="text-2xl font-bold font-display tracking-tight">
+    <div class="flex items-center gap-2 hover:scale-105 transition-transform duration-300 cursor-default">
+      <img src="/favicon.svg" alt="" class="w-8 h-8 drop-shadow-sm" aria-hidden="true">
+      <h1 class="text-3xl font-bold font-display tracking-tight text-indigo-600 dark:text-indigo-400">
         Clawdle
       </h1>
     </div>

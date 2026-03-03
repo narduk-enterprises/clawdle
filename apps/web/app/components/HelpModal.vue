@@ -35,17 +35,9 @@ function handleUpdateOpen(val: boolean) {
         <div class="space-y-3 pt-2">
           <div>
             <p class="font-semibold mb-2 text-default">Examples</p>
-            <div class="flex gap-1.5">
-              <div class="w-10 h-10 rounded-md flex items-center justify-center font-bold text-lg border-2 border-primary bg-primary text-white">
-                W
-              </div>
-              <div
-                v-for="letter in ['E', 'A', 'R', 'Y']"
-                :key="letter"
-                class="w-10 h-10 rounded-md flex items-center justify-center font-bold text-lg border-2 border-default text-default"
-              >
-                {{ letter }}
-              </div>
+            <div class="flex gap-1.5 transform scale-75 origin-left sm:scale-100 mb-2">
+              <GameTile letter="W" state="correct" />
+              <GameTile v-for="letter in ['E', 'A', 'R', 'Y']" :key="letter" :letter="letter" state="empty" />
             </div>
             <p class="mt-1 text-xs">
               <strong class="text-default">W</strong> is in the word and in the correct spot.
@@ -53,20 +45,10 @@ function handleUpdateOpen(val: boolean) {
           </div>
 
           <div>
-            <div class="flex gap-1.5">
-              <div class="w-10 h-10 rounded-md flex items-center justify-center font-bold text-lg border-2 border-default text-default">
-                P
-              </div>
-              <div class="w-10 h-10 rounded-md flex items-center justify-center font-bold text-lg border-2" style="background-color: var(--color-amber-500); border-color: var(--color-amber-500); color: white;">
-                I
-              </div>
-              <div
-                v-for="letter in ['L', 'L', 'S']"
-                :key="letter"
-                class="w-10 h-10 rounded-md flex items-center justify-center font-bold text-lg border-2 border-default text-default"
-              >
-                {{ letter }}
-              </div>
+            <div class="flex gap-1.5 transform scale-75 origin-left sm:scale-100 mb-2">
+              <GameTile letter="P" state="tbd" />
+              <GameTile letter="I" state="present" />
+              <GameTile v-for="letter in ['L', 'L', 'S']" :key="letter" :letter="letter" :state="'tbd'" />
             </div>
             <p class="mt-1 text-xs">
               <strong class="text-default">I</strong> is in the word but in the wrong spot.
@@ -74,17 +56,8 @@ function handleUpdateOpen(val: boolean) {
           </div>
 
           <div>
-            <div class="flex gap-1.5">
-              <div
-                v-for="(letter, idx) in ['V', 'A', 'G', 'U', 'E']"
-                :key="letter"
-                :class="[
-                  'w-10 h-10 rounded-md flex items-center justify-center font-bold text-lg border-2',
-                  idx === 3 ? 'border-muted bg-muted text-white' : 'border-default text-default',
-                ]"
-              >
-                {{ letter }}
-              </div>
+            <div class="flex gap-1.5 transform scale-75 origin-left sm:scale-100 mb-2">
+              <GameTile v-for="(letter, idx) in ['V', 'A', 'G', 'U', 'E']" :key="letter" :letter="letter" :state="idx === 3 ? 'absent' : 'tbd'" />
             </div>
             <p class="mt-1 text-xs">
               <strong class="text-default">U</strong> is not in the word in any spot.
