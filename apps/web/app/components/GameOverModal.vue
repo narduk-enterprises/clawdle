@@ -10,14 +10,13 @@ const emit = defineEmits<{
 const { gameState, nextPuzzleTime, getShareText } = useGame()
 const toast = useToast()
 
-const { data: stats } = await useAsyncData('gameover-stats', () => $fetch('/api/stats'), {
-  immediate: false,
-})
+const modalTitle = computed(() => gameState.value.status === 'won' ? '🎉 You got it!' : '😿 Better luck next time')
+
+const { data: stats, refresh } = await usePlayerStats()
 
 watch(() => props.open, async (isOpen) => {
   if (isOpen) {
-    const result = await $fetch('/api/stats')
-    stats.value = result
+    await refresh()
   }
 })
 
@@ -58,12 +57,23 @@ function getBarWidth(count: number): string {
 }
 
 function getDistCount(i: number): number {
-  if (!stats.value) return 0
+  if (!stats.value || !('guessDistribution' in stats.value)) return 0
   return (stats.value.guessDistribution as Record<string, number>)[String(i)] ?? 0
 }
 
 function isHighlightedRow(i: number): boolean {
   return gameState.value.status === 'won' && gameState.value.attempts === i
+}
+
+function getDistributionBarClass(i: number) {
+  return [
+    getDistCount(i) > 0 ? 'bg-primary' : 'bg-muted',
+    isHighlightedRow(i) ? 'bg-primary/80' : '',
+  ]
+}
+
+function getDistributionBarStyle(i: number) {
+  return { width: getBarWidth(getDistCount(i)) }
 }
 
 async function shareResult() {
@@ -75,16 +85,20 @@ async function shareResult() {
     toast.add({ title: 'Failed to copy', color: 'error' })
   }
 }
+
+function handleUpdateOpen(val: boolean) {
+  emit('update:open', val)
+}
 </script>
 
 <template>
   <UModal
     :open="props.open"
-    @update:open="emit('update:open', $event)"
+    @update:open="handleUpdateOpen"
   >
     <template #header>
       <h2 class="text-xl font-bold font-display text-center w-full">
-        {{ gameState.status === 'won' ? '🎉 You got it!' : '😿 Better luck next time' }}
+        {{ modalTitle }}
       </h2>
     </template>
 
@@ -161,11 +175,8 @@ async function shareResult() {
               <span class="w-3 text-xs font-bold text-dimmed">{{ i }}</span>
               <div
                 class="distribution-bar h-5 rounded-sm flex items-center justify-end px-1.5 text-xs font-bold text-white"
-                :class="[
-                  getDistCount(i) > 0 ? 'bg-primary' : 'bg-muted',
-                  isHighlightedRow(i) ? 'bg-primary/80' : '',
-                ]"
-                :style="{ width: getBarWidth(getDistCount(i)) }"
+                :class="getDistributionBarClass(i)"
+                :style="getDistributionBarStyle(i)"
               >
                 {{ getDistCount(i) }}
               </div>

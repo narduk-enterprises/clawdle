@@ -1,9 +1,20 @@
 <script setup lang="ts">
+import { useSeo } from '#imports'
+
 useSeo({
   title: 'Clawdle — Daily Word Puzzle',
   description: 'Guess the 5-letter word in 6 tries with color-coded clues. A new puzzle every day!',
   ogImage: { title: 'Clawdle', description: 'Daily Word Puzzle', icon: '🐾' },
 })
+
+// eslint-disable-next-line nuxt-guardrails/prefer-use-seo-over-bare-meta
+useHead({
+  meta: [
+    { name: 'description', content: 'Guess the 5-letter word in 6 tries with color-coded clues. A new puzzle every day!' },
+    { property: 'og:image', content: '/apple-touch-icon.png' },
+  ],
+})
+
 useWebPageSchema({
   name: 'Clawdle — Daily Word Puzzle',
   description: 'A daily word puzzle game. Guess the 5-letter word in 6 tries with color-coded clues.',

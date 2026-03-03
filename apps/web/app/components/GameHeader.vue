@@ -9,7 +9,7 @@ const settings = useSettings()
 </script>
 
 <template>
-  <header class="flex items-center justify-between px-4 py-3 border-b border-neutral-200 dark:border-neutral-800">
+  <div class="flex items-center justify-between px-4 py-3 border-b border-default pt-[calc(0.75rem+env(safe-area-inset-top))] select-none">
     <!-- Left: Help -->
     <div class="flex items-center gap-1">
       <UButton
@@ -49,5 +49,5 @@ const settings = useSettings()
         @click="settings.toggleDarkMode()"
       />
     </div>
-  </header>
+  </div>
 </template>

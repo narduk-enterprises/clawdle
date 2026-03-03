@@ -32,6 +32,6 @@ export default defineEventHandler(async (event) => {
         currentStreak: Number(stats.currentStreak),
         maxStreak: Number(stats.maxStreak),
         winPercentage: gamesPlayed > 0 ? Math.round((gamesWon / gamesPlayed) * 100) : 0,
-        guessDistribution: JSON.parse(stats.guessDistribution as string),
+        guessDistribution: JSON.parse(stats.guessDistribution as string) as Record<string, number>,
     }
 })

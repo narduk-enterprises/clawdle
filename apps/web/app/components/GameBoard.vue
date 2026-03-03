@@ -26,6 +26,7 @@ function shouldBounce(row: number): boolean {
 
 <template>
   <div class="flex flex-col items-center gap-1.5">
+    <!-- eslint-disable vue-official/no-template-complex-expressions -->
     <div
       v-for="(row, rowIdx) in board"
       :key="rowIdx"
