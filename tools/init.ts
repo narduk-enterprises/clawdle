@@ -92,7 +92,7 @@ const LAYER_PACKAGE_PLACEHOLDER = '__LAYER_PKG_PLACEHOLDER__'
 const REPLACEMENTS = [
   // 1. Temporarily replace the protected layer package name with a safe placeholder
   { from: /@loganrenz\/narduk-nuxt-template-layer/g, to: LAYER_PACKAGE_PLACEHOLDER },
-  
+
   // 2. Perform all standard project renames
   { from: /narduk-nuxt-template-examples-db/g, to: `${APP_NAME}-examples-db` },
   { from: /narduk-nuxt-template-examples/g, to: `${APP_NAME}-examples` },
@@ -105,7 +105,7 @@ const REPLACEMENTS = [
   { from: /Nuxt 4 Demo/g, to: DISPLAY_NAME },
   // Template-specific site description — replace with a generic one the agent can customize.
   { from: /A production-ready demo template showcasing Nuxt 4, Nuxt UI 4, Tailwind CSS 4, and Cloudflare Workers with D1 database\./g, to: `${DISPLAY_NAME} — powered by Nuxt 4 and Cloudflare Workers.` },
-  
+
   // 3. Restore the protected layer package name
   { from: new RegExp(LAYER_PACKAGE_PLACEHOLDER, 'g'), to: LAYER_PACKAGE },
 ]
@@ -118,12 +118,12 @@ const ROOT_DIR = path.resolve(__dirname, '..')
 async function walkDir(dir: string): Promise<string[]> {
   const omitDirs = new Set(['node_modules', '.git', '.nuxt', '.output', 'dist', 'playwright-report', 'test-results', '.DS_Store'])
   const files: string[] = []
-  
+
   const entries = await fs.readdir(dir, { withFileTypes: true })
-  
+
   for (const entry of entries) {
     if (omitDirs.has(entry.name)) continue
-    
+
     const fullPath = path.join(dir, entry.name)
     if (entry.isDirectory()) {
       files.push(...await walkDir(fullPath))
@@ -141,10 +141,10 @@ async function walkDir(dir: string): Promise<string[]> {
 function getDopplerSecretNames(project: string, config: string): Set<string> {
   try {
     const output = execSync(
-      `doppler secrets --project ${project} --config ${config} --only-names --plain`,
+      `doppler secrets --project ${project} --config ${config} --json`,
       { encoding: 'utf-8', stdio: 'pipe' }
     )
-    return new Set(output.trim().split('\n').filter(Boolean))
+    return new Set(Object.keys(JSON.parse(output)))
   } catch {
     return new Set()
   }
@@ -201,7 +201,7 @@ async function main() {
   }
 
   console.log(`\n🚀 Initializing: ${DISPLAY_NAME} (${APP_NAME})${REPAIR_MODE ? ' [REPAIR MODE]' : ''}`)
-  
+
   // 1. Recursive String Replacement
   if (REPAIR_MODE) {
     console.log('\nStep 1/10: Replacing boilerplate strings... ⏭ skipped (--repair)')
@@ -212,7 +212,7 @@ async function main() {
 
     for (const file of files) {
       // Skip this init script so we don't dynamically break the replacements
-      if (file.endsWith('tools/init.ts')) continue
+      if (file.endsWith('tools/init.ts') || file.endsWith('tools/validate.ts') || file.endsWith('tools/update-layer.ts')) continue
       // Skip documentation files — they reference the template name intentionally
       if (file.endsWith('.md')) continue
 
@@ -582,7 +582,7 @@ Pushes to \`main\` are automatically built and deployed via the GitHub Actions C
         } else {
           console.log('  Installing ephemeral dependencies (googleapis, google-auth-library)...')
           execSync('pnpm add -w --save-dev googleapis google-auth-library', { encoding: 'utf-8', stdio: 'pipe' })
-          
+
           console.log('  Executing Narduk Analytics provisioning pipeline...')
           // Run against the app's own Doppler project (prd config) so SITE_URL, GSC creds,
           // and hub references all resolve correctly. Command is `all`, not `setup:all`.
@@ -612,7 +612,7 @@ Pushes to \`main\` are automatically built and deployed via the GitHub Actions C
     if (await fs.stat(webFaviconSvg).then(() => true).catch(() => false)) {
       console.log('  Installing ephemeral dependencies (sharp)...')
       execSync('pnpm add -w --save-dev sharp', { encoding: 'utf-8', stdio: 'pipe' })
-      
+
       execSync(
         `npx tsx tools/generate-favicons.ts --target=apps/web/public --name="${DISPLAY_NAME}" --short-name="${DISPLAY_NAME.slice(0, 12)}"`,
         { stdio: 'inherit', cwd: ROOT_DIR }
@@ -638,7 +638,7 @@ Pushes to \`main\` are automatically built and deployed via the GitHub Actions C
       const dirsToRemove = [
         path.join(ROOT_DIR, 'apps', 'showcase'),
       ]
-      
+
       const appsContent = await fs.readdir(path.join(ROOT_DIR, 'apps'), { withFileTypes: true }).catch(() => [])
       for (const entry of appsContent) {
         if (entry.isDirectory() && entry.name.startsWith('example-')) {

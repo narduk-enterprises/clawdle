@@ -96,7 +96,11 @@ export function useGame() {
 
     async function submitGuess() {
         if (gameState.value.status !== 'in_progress') return
-        if (currentCol.value < 5) return
+        if (currentCol.value < 5) {
+            toast.add({ title: 'Not enough letters' })
+            triggerShake()
+            return
+        }
         if (isRevealing.value) return
 
         const guess = board.value[currentRow.value]!.join('')

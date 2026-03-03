@@ -12,7 +12,12 @@ useHead({
   meta: [
     { name: 'description', content: 'Guess the 5-letter word in 6 tries with color-coded clues. A new puzzle every day!' },
     { property: 'og:image', content: '/apple-touch-icon.png' },
+    { name: 'viewport', content: 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0, viewport-fit=cover' },
   ],
+})
+
+definePageMeta({
+  layout: false,
 })
 
 useWebPageSchema({
@@ -77,7 +82,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="flex flex-col h-dvh bg-default transition-colors duration-300">
+  <div class="flex flex-col h-dvh overflow-hidden bg-slate-50 dark:bg-slate-950 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-100 via-slate-50 to-slate-50 dark:from-indigo-900/40 dark:via-slate-950 dark:to-slate-950 transition-colors duration-300">
     <!-- Header -->
     <GameHeader
       @help="helpOpen = true"
@@ -86,14 +91,14 @@ onUnmounted(() => {
     />
 
     <!-- Game Area -->
-    <div class="flex-1 flex flex-col items-center justify-between py-4 px-2 overflow-hidden">
+    <div class="flex flex-col items-center justify-between flex-1 w-full max-w-lg mx-auto pb-[calc(1rem_+_env(safe-area-inset-bottom))] sm:pb-4 overflow-hidden touch-manipulation">
       <!-- Board -->
-      <div class="flex-1 flex items-center">
+      <div class="w-full flex-1 flex flex-col items-center justify-center min-h-0 px-2">
         <GameBoard />
       </div>
 
       <!-- Keyboard -->
-      <div class="w-full max-w-lg pb-2">
+      <div class="w-full shrink-0 px-1 mt-2 mb-2">
         <GameKeyboard
           @key="addLetter"
           @enter="submitGuess"
