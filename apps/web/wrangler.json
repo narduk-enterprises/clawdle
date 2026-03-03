@@ -18,11 +18,5 @@
       "database_name": "clawdle-db",
       "database_id": "a501785e-af2c-4bda-9845-3af8b365b7fe"
     }
-  ],
-  "routes": [
-    {
-      "pattern": "clawdle.com",
-      "custom_domain": true
-    }
   ]
 }
