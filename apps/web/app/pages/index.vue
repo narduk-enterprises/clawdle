@@ -82,7 +82,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="flex flex-col h-dvh overflow-hidden bg-slate-50 dark:bg-slate-950 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-100 via-slate-50 to-slate-50 dark:from-indigo-900/40 dark:via-slate-950 dark:to-slate-950 transition-colors duration-300">
+  <div class="flex flex-col h-dvh overflow-hidden bg-default bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/10 via-default to-default dark:from-primary/20 transition-colors duration-300">
     <!-- Header -->
     <GameHeader
       @help="helpOpen = true"
