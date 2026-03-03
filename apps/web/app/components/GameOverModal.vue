@@ -1,0 +1,202 @@
+<script setup lang="ts">
+const props = defineProps<{
+  open: boolean
+}>()
+
+const emit = defineEmits<{
+  'update:open': [value: boolean]
+}>()
+
+const { gameState, nextPuzzleTime, getShareText } = useGame()
+const toast = useToast()
+
+const { data: stats } = await useAsyncData('gameover-stats', () => $fetch('/api/stats'), {
+  immediate: false,
+})
+
+watch(() => props.open, async (isOpen) => {
+  if (isOpen) {
+    const result = await $fetch('/api/stats')
+    stats.value = result
+  }
+})
+
+// Countdown timer
+const countdown = ref('')
+let countdownInterval: ReturnType<typeof setInterval> | null = null
+
+function updateCountdown() {
+  const ms = nextPuzzleTime.value
+  const hours = Math.floor(ms / (1000 * 60 * 60))
+  const minutes = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60))
+  const seconds = Math.floor((ms % (1000 * 60)) / 1000)
+  countdown.value = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
+}
+
+watch(() => props.open, (isOpen) => {
+  if (isOpen) {
+    updateCountdown()
+    countdownInterval = setInterval(updateCountdown, 1000)
+  } else if (countdownInterval) {
+    clearInterval(countdownInterval)
+    countdownInterval = null
+  }
+})
+
+onUnmounted(() => {
+  if (countdownInterval) clearInterval(countdownInterval)
+})
+
+const maxDistribution = computed(() => {
+  if (!stats.value) return 1
+  const dist = stats.value.guessDistribution as Record<string, number>
+  return Math.max(...Object.values(dist), 1)
+})
+
+function getBarWidth(count: number): string {
+  return `${Math.max((count / maxDistribution.value) * 100, 7)}%`
+}
+
+function getDistCount(i: number): number {
+  if (!stats.value) return 0
+  return (stats.value.guessDistribution as Record<string, number>)[String(i)] ?? 0
+}
+
+function isHighlightedRow(i: number): boolean {
+  return gameState.value.status === 'won' && gameState.value.attempts === i
+}
+
+async function shareResult() {
+  const text = getShareText()
+  try {
+    await navigator.clipboard.writeText(text)
+    toast.add({ title: 'Copied to clipboard!', color: 'success' })
+  } catch {
+    toast.add({ title: 'Failed to copy', color: 'error' })
+  }
+}
+</script>
+
+<template>
+  <UModal
+    :open="props.open"
+    @update:open="emit('update:open', $event)"
+  >
+    <template #header>
+      <h2 class="text-xl font-bold font-display text-center w-full">
+        {{ gameState.status === 'won' ? '🎉 You got it!' : '😿 Better luck next time' }}
+      </h2>
+    </template>
+
+    <template #body>
+      <div class="space-y-5">
+        <!-- Result -->
+        <div v-if="gameState.status === 'lost'" class="text-center">
+          <p class="text-sm text-dimmed">
+            The word was
+          </p>
+          <p class="text-2xl font-bold font-display uppercase tracking-widest text-primary">
+            {{ gameState.answer }}
+          </p>
+        </div>
+
+        <div v-if="gameState.status === 'won'" class="text-center">
+          <p class="text-sm text-dimmed">
+            Solved in
+          </p>
+          <p class="text-3xl font-bold font-display text-primary">
+            {{ gameState.attempts }}/6
+          </p>
+        </div>
+
+        <!-- Stats Summary -->
+        <div v-if="stats" class="grid grid-cols-4 gap-2 text-center">
+          <div>
+            <div class="text-2xl font-bold font-display">
+              {{ stats.gamesPlayed }}
+            </div>
+            <div class="text-[10px] text-dimmed">
+              Played
+            </div>
+          </div>
+          <div>
+            <div class="text-2xl font-bold font-display">
+              {{ stats.winPercentage }}
+            </div>
+            <div class="text-[10px] text-dimmed">
+              Win %
+            </div>
+          </div>
+          <div>
+            <div class="text-2xl font-bold font-display">
+              {{ stats.currentStreak }}
+            </div>
+            <div class="text-[10px] text-dimmed">
+              Current
+            </div>
+          </div>
+          <div>
+            <div class="text-2xl font-bold font-display">
+              {{ stats.maxStreak }}
+            </div>
+            <div class="text-[10px] text-dimmed">
+              Max
+            </div>
+          </div>
+        </div>
+
+        <USeparator />
+
+        <!-- Guess Distribution -->
+        <div v-if="stats">
+          <h3 class="text-xs font-semibold mb-2 text-dimmed uppercase tracking-wider">
+            Guess Distribution
+          </h3>
+          <div class="space-y-1">
+            <div
+              v-for="i in 6"
+              :key="i"
+              class="flex items-center gap-2"
+            >
+              <span class="w-3 text-xs font-bold text-dimmed">{{ i }}</span>
+              <div
+                class="distribution-bar h-5 rounded-sm flex items-center justify-end px-1.5 text-xs font-bold text-white"
+                :class="[
+                  getDistCount(i) > 0 ? 'bg-primary' : 'bg-muted',
+                  isHighlightedRow(i) ? 'bg-primary/80' : '',
+                ]"
+                :style="{ width: getBarWidth(getDistCount(i)) }"
+              >
+                {{ getDistCount(i) }}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <USeparator />
+
+        <!-- Next Puzzle Countdown -->
+        <div class="text-center">
+          <p class="text-xs text-dimmed uppercase tracking-wider mb-1">
+            Next Clawdle
+          </p>
+          <p class="text-2xl font-bold font-display tabular-nums">
+            {{ countdown }}
+          </p>
+        </div>
+
+        <!-- Share Button -->
+        <UButton
+          block
+          size="lg"
+          color="primary"
+          icon="i-lucide-share-2"
+          class="font-bold"
+          @click="shareResult"
+        >
+          Share
+        </UButton>
+      </div>
+    </template>
+  </UModal>
+</template>

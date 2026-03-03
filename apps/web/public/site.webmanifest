@@ -1,6 +1,6 @@
 {
-  "name": "Nuxt 4 Demo",
-  "short_name": "Nuxt 4 Demo",
+  "name": "Clawdle",
+  "short_name": "Clawdle",
   "icons": [
     {
       "src": "/favicon-32x32.png",
@@ -14,6 +14,6 @@
     }
   ],
   "theme_color": "#10b981",
-  "background_color": "#0B1120",
+  "background_color": "#0f172a",
   "display": "standalone"
 }
