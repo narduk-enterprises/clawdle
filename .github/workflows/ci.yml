@@ -126,7 +126,7 @@ jobs:
           # Dynamically run the db:migrate script against the remote database
           cmd=$(node -p "require('./package.json').scripts['db:migrate']?.replaceAll('--local', '--remote') || ''")
           if [ -n "$cmd" ]; then
-            pnpm exec $cmd
+            pnpm exec bash -c "$cmd"
           else
             echo "No db:migrate script found!"
             exit 1
@@ -202,7 +202,7 @@ jobs:
             cmd=$(node -p "require('./package.json').scripts['db:migrate']?.replaceAll('--local', '--remote') || ''")
             if [ -n "$cmd" ]; then
               echo "Running remote migrations for ${{ matrix.app }}..."
-              pnpm exec $cmd
+              pnpm exec bash -c "$cmd"
             else
               echo "No db:migrate script found for ${{ matrix.app }}, skipping."
             fi
@@ -264,7 +264,7 @@ jobs:
             cmd=$(node -p "require('./package.json').scripts['db:migrate']?.replaceAll('--local', '--remote') || ''")
             if [ -n "$cmd" ]; then
               echo "Running remote migrations for showcase..."
-              pnpm exec $cmd
+              pnpm exec bash -c "$cmd"
             else
               echo "No db:migrate script found for showcase, skipping."
             fi
