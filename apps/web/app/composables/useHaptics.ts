@@ -62,28 +62,46 @@ function vibrate(pattern: number | number[]): void {
             }
         }
 
-        // iOS Safari fallback: trigger selection change which can invoke Taptic Engine
-        try {
-            const el = document.createElement('div')
-            el.style.position = 'fixed'
-            el.style.top = '-100px'
-            el.style.opacity = '0'
-            el.style.pointerEvents = 'none'
-            el.textContent = '\u200b' // zero-width space
-            document.body.appendChild(el)
-            const range = document.createRange()
-            range.selectNode(el)
-            const selection = window.getSelection()
-            selection?.removeAllRanges()
-            selection?.addRange(range)
-            // Clean up after a frame
-            requestAnimationFrame(() => {
-                selection?.removeAllRanges()
-                el.remove()
-            })
+        // iOS Safari 17.4+ fallback: use a hidden `<input type="checkbox" switch />`
+        // to invoke the system's Taptic Engine
+        const fireHaptic = () => {
+            try {
+                const label = document.createElement('label')
+                const input = document.createElement('input')
+                input.type = 'checkbox'
+                input.setAttribute('switch', '')
+                label.appendChild(input)
+
+                label.style.position = 'fixed'
+                label.style.top = '-100px'
+                label.style.left = '-100px'
+                label.style.opacity = '0'
+                label.style.pointerEvents = 'none'
+
+                document.body.appendChild(label)
+                label.click()
+
+                // Clean up after a frame
+                requestAnimationFrame(() => {
+                    label.remove()
+                })
+            }
+            catch {
+                // Silently fail if this trick doesn't work
+            }
         }
-        catch {
-            // Silently fail if this trick doesn't work
+
+        if (Array.isArray(pattern)) {
+            let delay = 0
+            for (let i = 0; i < pattern.length; i++) {
+                if (i % 2 === 0) { // Even indices are vibrate durations
+                    setTimeout(fireHaptic, delay)
+                }
+                delay += (pattern[i] || 0)
+            }
+        }
+        else {
+            fireHaptic()
         }
     }
 }
