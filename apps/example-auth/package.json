@@ -2,7 +2,7 @@
   "name": "example-auth",
   "type": "module",
   "private": true,
-  "version": "1.9.3",
+  "version": "1.9.4",
   "scripts": {
     "build": "nuxt build",
     "dev": "pnpm run db:ready && doppler run -- nuxt dev",
