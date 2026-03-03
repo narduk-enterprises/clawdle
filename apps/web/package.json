@@ -6,8 +6,8 @@
   "scripts": {
     "build": "nuxt build",
     "dev": "nuxt dev",
-    "db:migrate": "wrangler d1 execute clawdle-db --local --file=drizzle/0000_initial_schema.sql && wrangler d1 execute clawdle-db --local --file=drizzle/0001_clawdle_schema.sql && wrangler d1 execute clawdle-db --local --file=drizzle/0002_seed_words.sql",
-    "db:seed": "wrangler d1 execute clawdle-db --local --file=drizzle/0002_seed_words.sql",
+    "db:migrate": "wrangler d1 execute clawdle-db --local --yes --file=drizzle/0000_initial_schema.sql && wrangler d1 execute clawdle-db --local --yes --file=drizzle/0001_clawdle_schema.sql && wrangler d1 execute clawdle-db --local --yes --file=drizzle/0002_seed_words.sql",
+    "db:seed": "wrangler d1 execute clawdle-db --local --yes --file=drizzle/0002_seed_words.sql",
     "db:studio": "drizzle-kit studio",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
