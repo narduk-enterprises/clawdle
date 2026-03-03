@@ -8,7 +8,7 @@ interface GameState {
     guesses: GuessFeedback[]
     status: 'idle' | 'in_progress' | 'won' | 'lost'
     attempts: number
-    puzzleNumber: number
+    puzzleNumber: number | string
     answer: string | null
 }
 
@@ -251,6 +251,38 @@ export function useGame() {
         return tomorrow.getTime() - now.getTime()
     }
 
+    // ─── Play Again ───────────────────────────────────────
+
+    async function startNewGame() {
+        try {
+            const result = await $fetch<{
+                sessionId: string
+                guesses: GuessFeedback[]
+                status: GameState['status']
+                attempts: number
+                answer: string | null
+                puzzleNumber: number | string
+            }>('/api/game/new', {
+                method: 'POST',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            })
+
+            gameState.value.sessionId = result.sessionId
+            gameState.value.guesses = result.guesses
+            gameState.value.status = result.status
+            gameState.value.attempts = result.attempts
+            gameState.value.answer = result.answer
+            gameState.value.puzzleNumber = result.puzzleNumber
+
+            // Reset board
+            board.value = Array.from({ length: 6 }, () => Array(5).fill(''))
+            currentRow.value = 0
+            currentCol.value = 0
+        } catch {
+            toast.add({ title: 'Failed to start a new game', color: 'error' })
+        }
+    }
+
     return {
         board,
         currentRow,
@@ -266,5 +298,6 @@ export function useGame() {
         removeLetter,
         submitGuess,
         getShareText,
+        startNewGame,
     }
 }

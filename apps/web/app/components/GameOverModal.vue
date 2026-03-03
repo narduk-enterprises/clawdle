@@ -7,7 +7,7 @@ const emit = defineEmits<{
   'update:open': [value: boolean]
 }>()
 
-const { gameState, getNextPuzzleTime, getShareText } = useGame()
+const { gameState, getNextPuzzleTime, getShareText, startNewGame } = useGame()
 const toast = useToast()
 
 const modalTitle = computed(() => gameState.value.status === 'won' ? '🎉 You got it!' : '😿 Better luck next time')
@@ -84,6 +84,11 @@ async function shareResult() {
   } catch {
     toast.add({ title: 'Failed to copy', color: 'error' })
   }
+}
+
+async function startNewGameClicked() {
+  await startNewGame()
+  emit('update:open', false)
 }
 
 function handleUpdateOpen(val: boolean) {
@@ -206,6 +211,19 @@ function handleUpdateOpen(val: boolean) {
           @click="shareResult"
         >
           Share Result
+        </UButton>
+
+        <!-- Play Again Button -->
+        <UButton
+          block
+          size="xl"
+          color="neutral"
+          variant="outline"
+          icon="i-lucide-play"
+          class="font-display font-bold text-lg rounded-full shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 mt-2 py-3"
+          @click="startNewGameClicked"
+        >
+          Play Again
         </UButton>
       </div>
     </template>
