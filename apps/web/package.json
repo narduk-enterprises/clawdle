@@ -18,7 +18,7 @@
     "quality": "pnpm run lint && pnpm run typecheck"
   },
   "dependencies": {
-    "@loganrenz/narduk-nuxt-template-layer": "workspace:*",
+    "@narduk-enterprises/narduk-nuxt-template-layer": "workspace:*",
     "@narduk/eslint-config": "workspace:*",
     "drizzle-orm": "^0.45.1",
     "nuxt": "^4.3.1",
