@@ -124,7 +124,7 @@ jobs:
         run: |
           echo "Running remote migrations..."
           # Dynamically run the db:migrate script against the remote database
-          cmd=$(node -p "require('./package.json').scripts['db:migrate']?.replace('--local', '--remote') || ''")
+          cmd=$(node -p "require('./package.json').scripts['db:migrate']?.replaceAll('--local', '--remote') || ''")
           if [ -n "$cmd" ]; then
             pnpm exec $cmd
           else
@@ -199,7 +199,7 @@ jobs:
         working-directory: apps/${{ matrix.app }}
         run: |
           if [ -f "package.json" ]; then
-            cmd=$(node -p "require('./package.json').scripts['db:migrate']?.replace('--local', '--remote') || ''")
+            cmd=$(node -p "require('./package.json').scripts['db:migrate']?.replaceAll('--local', '--remote') || ''")
             if [ -n "$cmd" ]; then
               echo "Running remote migrations for ${{ matrix.app }}..."
               pnpm exec $cmd
@@ -261,7 +261,7 @@ jobs:
         working-directory: apps/showcase
         run: |
           if [ -f "package.json" ]; then
-            cmd=$(node -p "require('./package.json').scripts['db:migrate']?.replace('--local', '--remote') || ''")
+            cmd=$(node -p "require('./package.json').scripts['db:migrate']?.replaceAll('--local', '--remote') || ''")
             if [ -n "$cmd" ]; then
               echo "Running remote migrations for showcase..."
               pnpm exec $cmd
