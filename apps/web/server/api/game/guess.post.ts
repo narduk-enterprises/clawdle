@@ -4,7 +4,7 @@ import { gameSessions } from '#server/database/schema'
 
 const guessSchema = z.object({
     guess: z.string().length(5).transform(val => val.toLowerCase()),
-    sessionId: z.string().optional(),
+    sessionId: z.string().nullish(),
 })
 
 export default defineEventHandler(async (event) => {
