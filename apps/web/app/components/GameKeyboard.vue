@@ -34,17 +34,17 @@ function getKeyLabel(key: string): string {
 }
 
 function getKeyWidth(key: string): string {
-  if (key === 'enter' || key === 'backspace') return 'min-w-[4rem] sm:min-w-[5rem]'
-  return 'min-w-[2rem] sm:min-w-[2.75rem]'
+  if (key === 'enter' || key === 'backspace') return 'flex-[1.5] max-w-[5rem]'
+  return 'flex-1 max-w-[3rem]'
 }
 </script>
 
 <template>
-  <div class="flex flex-col items-center gap-1.5">
+  <div class="flex flex-col items-center gap-1.5 w-full px-1">
     <div
       v-for="(row, rowIdx) in rows"
       :key="rowIdx"
-      class="flex gap-1 sm:gap-1.5 justify-center"
+      class="flex gap-1 sm:gap-1.5 justify-center w-full"
     >
       <!-- eslint-disable-next-line atx/no-native-button -->
       <button

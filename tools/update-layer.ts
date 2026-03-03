@@ -43,7 +43,7 @@ async function main() {
   // 1. Check/Add remote
   const remotes = getOutput('git remote -v')
   const hasTemplate = remotes.split('\n').some(line => line.startsWith('template\t') && line.includes(TEMPLATE_URL))
-  
+
   if (!hasTemplate) {
     if (remotes.includes('template\t')) {
       // remote 'template' exists but URL is different, set it
@@ -71,13 +71,13 @@ async function main() {
       if (originUrl) {
         let pkgContent = await fs.readFile(LAYER_PKG_PATH, 'utf-8')
         const pkg = JSON.parse(pkgContent)
-        
+
         if (pkg.repository?.url !== originUrl) {
           pkg.repository = pkg.repository || {}
           pkg.repository.type = 'git'
           pkg.repository.url = originUrl
           pkg.repository.directory = 'layers/narduk-nuxt-layer'
-          
+
           await fs.writeFile(LAYER_PKG_PATH, JSON.stringify(pkg, null, 2) + '\n', 'utf-8')
           run('git add layers/narduk-nuxt-layer/package.json')
           console.log(`  ✅ Updated repository.url to ${originUrl} and staged the change`)
