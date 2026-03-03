@@ -28,7 +28,7 @@ export default defineNuxtConfig({
     gaPropertyId: process.env.GA_PROPERTY_ID || '',
     posthogProjectId: process.env.POSTHOG_PROJECT_ID || '',
     public: {
-      appUrl: process.env.SITE_URL || 'https://clawdle.narduk.workers.dev',
+      appUrl: process.env.SITE_URL || 'https://clawdle.nard.uk',
       appName: process.env.APP_NAME || 'Clawdle',
       // Analytics
       posthogPublicKey: process.env.POSTHOG_PUBLIC_KEY || '',
@@ -41,7 +41,7 @@ export default defineNuxtConfig({
   },
 
   site: {
-    url: process.env.SITE_URL || 'https://clawdle.narduk.workers.dev',
+    url: process.env.SITE_URL || 'https://clawdle.nard.uk',
     name: 'Clawdle',
     description: 'A daily word puzzle game. Guess the 5-letter word in 6 tries with color-coded clues. Play today\'s Clawdle!',
     defaultLocale: 'en',
@@ -51,14 +51,14 @@ export default defineNuxtConfig({
     identity: {
       type: 'Organization',
       name: 'Clawdle',
-      url: process.env.SITE_URL || 'https://clawdle.narduk.workers.dev',
+      url: process.env.SITE_URL || 'https://clawdle.nard.uk',
       logo: '/favicon.svg',
     },
   },
 
   image: {
     cloudflare: {
-      baseURL: process.env.SITE_URL || 'https://clawdle.narduk.workers.dev',
+      baseURL: process.env.SITE_URL || 'https://clawdle.nard.uk',
     },
   },
 })

@@ -141,10 +141,10 @@ async function walkDir(dir: string): Promise<string[]> {
 function getDopplerSecretNames(project: string, config: string): Set<string> {
   try {
     const output = execSync(
-      `doppler secrets --project ${project} --config ${config} --json`,
+      `doppler secrets --project ${project} --config ${config} --only-names --plain`,
       { encoding: 'utf-8', stdio: 'pipe' }
     )
-    return new Set(Object.keys(JSON.parse(output)))
+    return new Set(output.trim().split('\n').filter(Boolean))
   } catch {
     return new Set()
   }
@@ -212,7 +212,7 @@ async function main() {
 
     for (const file of files) {
       // Skip this init script so we don't dynamically break the replacements
-      if (file.endsWith('tools/init.ts') || file.endsWith('tools/validate.ts') || file.endsWith('tools/update-layer.ts')) continue
+      if (file.endsWith('tools/init.ts')) continue
       // Skip documentation files — they reference the template name intentionally
       if (file.endsWith('.md')) continue
 
@@ -439,30 +439,72 @@ Pushes to \`main\` are automatically built and deployed via the GitHub Actions C
       }
     }
 
-    // Only set hub references for keys that aren't already configured
+    // Set hub references — overwrites stale direct values with cross-project refs
     try {
       const existing = getDopplerSecretNames(APP_NAME, 'prd')
-      const hubSecrets: Record<string, string> = {
+
+      // Hub cross-project references (always enforce these)
+      const hubRefs: Record<string, string> = {
         CLOUDFLARE_API_TOKEN: '${narduk-nuxt-template.prd.CLOUDFLARE_API_TOKEN}',
         CLOUDFLARE_ACCOUNT_ID: '${narduk-nuxt-template.prd.CLOUDFLARE_ACCOUNT_ID}',
         POSTHOG_PUBLIC_KEY: '${narduk-analytics.prd.POSTHOG_PUBLIC_KEY}',
         POSTHOG_PROJECT_ID: '${narduk-analytics.prd.POSTHOG_PROJECT_ID}',
         POSTHOG_HOST: '${narduk-analytics.prd.POSTHOG_HOST}',
-        APP_NAME: APP_NAME,
-        SITE_URL: SITE_URL,
         GA_ACCOUNT_ID: '${narduk-analytics.prd.GA_ACCOUNT_ID}',
-        GSC_SERVICE_ACCOUNT_JSON: '${narduk-analytics.prd.GSC_SERVICE_ACCOUNT_JSON}'
+        GSC_SERVICE_ACCOUNT_JSON: '${narduk-analytics.prd.GSC_SERVICE_ACCOUNT_JSON}',
       }
 
-      const toSet = Object.entries(hubSecrets)
-        .filter(([key]) => !existing.has(key))
-        .map(([key, val]) => `${key}='${val}'`)
+      // Per-app secrets (only set if missing — don't overwrite app-specific values)
+      const appSecrets: Record<string, string> = {
+        APP_NAME: APP_NAME,
+        SITE_URL: SITE_URL,
+      }
+
+      // Hub refs: verify resolved value matches hub, overwrite if stale
+      let hubToken = ''
+      try {
+        const hubJson = execSync(
+          'doppler secrets get CLOUDFLARE_API_TOKEN --project narduk-nuxt-template --config prd --json',
+          { encoding: 'utf-8', stdio: 'pipe' },
+        )
+        hubToken = JSON.parse(hubJson).CLOUDFLARE_API_TOKEN?.computed || ''
+      } catch { /* hub unavailable */ }
+
+      const toSet: string[] = []
+
+      if (hubToken) {
+        let spokeToken = ''
+        try {
+          const spokeJson = execSync(
+            `doppler secrets get CLOUDFLARE_API_TOKEN --project ${APP_NAME} --config prd --json`,
+            { encoding: 'utf-8', stdio: 'pipe' },
+          )
+          spokeToken = JSON.parse(spokeJson).CLOUDFLARE_API_TOKEN?.computed || ''
+        } catch { /* not set */ }
+
+        if (spokeToken !== hubToken) {
+          // Stale or missing — force all hub refs
+          for (const [key, val] of Object.entries(hubRefs)) {
+            toSet.push(`${key}='${val}'`)
+          }
+        }
+      } else {
+        // Can't verify hub — only set missing refs
+        for (const [key, val] of Object.entries(hubRefs)) {
+          if (!existing.has(key)) toSet.push(`${key}='${val}'`)
+        }
+      }
+
+      // Per-app secrets: only add if missing
+      for (const [key, val] of Object.entries(appSecrets)) {
+        if (!existing.has(key)) toSet.push(`${key}='${val}'`)
+      }
 
       if (toSet.length > 0) {
         execSync(`doppler secrets set ${toSet.join(' ')} --project ${APP_NAME} --config prd`, { stdio: 'pipe' })
-        console.log(`  ✅ Synced ${toSet.length} hub credentials: ${toSet.map(s => s.split('=')[0]).join(', ')}`)
+        console.log(`  ✅ Synced ${toSet.length} credentials: ${toSet.map(s => s.split('=')[0]).join(', ')}`)
       } else {
-        console.log(`  ⏭ All core credentials already configured.`)
+        console.log(`  ⏭ All credentials correctly configured (hub references verified).`)
       }
     } catch (error: any) {
       console.warn(`  ⚠️ Failed to sync hub credentials: ${error.message}`)
@@ -695,16 +737,47 @@ Pushes to \`main\` are automatically built and deployed via the GitHub Actions C
         }
       }
 
-      // Strip deploy-examples and deploy-showcase jobs from ci.yml so CI does not fail after example apps are removed
+      // Replace ci.yml with a slim version that calls reusable workflows from the template repo.
+      // This eliminates CI drift — when the template updates its workflows, all derived apps benefit.
       const ciYamlPath = path.join(ROOT_DIR, '.github', 'workflows', 'ci.yml')
       try {
-        let ciYamlContent = await fs.readFile(ciYamlPath, 'utf-8')
-        if (ciYamlContent.includes('deploy-examples:')) {
-          ciYamlContent = ciYamlContent.replace(/\n  deploy-examples:[\s\S]*/m, '')
-          await fs.writeFile(ciYamlPath, ciYamlContent, 'utf-8')
-        }
+        const slimCi = `name: CI
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-\${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    uses: narduk-enterprises/narduk-nuxt-template/.github/workflows/reusable-quality.yml@main
+
+  deploy:
+    if: github.event_name != 'pull_request'
+    needs: [quality]
+    permissions:
+      contents: read
+      deployments: write
+    uses: narduk-enterprises/narduk-nuxt-template/.github/workflows/reusable-deploy.yml@main
+    secrets:
+      DOPPLER_TOKEN: \${{ secrets.DOPPLER_TOKEN }}
+      CLOUDFLARE_API_TOKEN: \${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: \${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+`
+        await fs.writeFile(ciYamlPath, slimCi, 'utf-8')
       } catch (ciErr: any) {
         console.warn(`  ⚠️ Could not update ci.yml: ${ciErr.message}`)
+      }
+
+      // Remove reusable workflow definitions (they live in the template repo, not derived apps)
+      for (const wf of ['reusable-quality.yml', 'reusable-deploy.yml']) {
+        await fs.rm(path.join(ROOT_DIR, '.github', 'workflows', wf), { force: true })
       }
 
       // Rewrite playwright.config.ts to simple web configuration
@@ -748,6 +821,24 @@ export default defineConfig({
   }
 
   // 10. Done (script is kept for re-runs)
+  // Write the bootstrap sentinel so pre* hooks allow dev/build/deploy
+  await fs.writeFile(path.join(ROOT_DIR, '.setup-complete'), `initialized=${new Date().toISOString()}\napp=${APP_NAME}\n`, 'utf-8')
+
+  // Record the template SHA this app was spawned from (used by drift detection in CI)
+  let templateSha = ''
+  try {
+    templateSha = execSync('git rev-parse HEAD', { encoding: 'utf-8', stdio: 'pipe', cwd: ROOT_DIR }).trim()
+  } catch { /* pre-init state — no commits yet */ }
+
+  const templateVersionContent = [
+    `sha=${templateSha || 'unknown'}`,
+    `template=narduk-nuxt-template`,
+    `spawned=${new Date().toISOString()}`,
+    `app=${APP_NAME}`,
+    '',
+  ].join('\n')
+  await fs.writeFile(path.join(ROOT_DIR, '.template-version'), templateVersionContent, 'utf-8')
+
   console.log('\nStep 10/10: Complete!')
   console.log('  ℹ️  init.ts is kept for re-runs. Use --repair to re-run infra steps only.')
 
