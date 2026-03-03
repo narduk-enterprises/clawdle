@@ -3,7 +3,7 @@
 -- 10657 additional valid guess words (no date assigned)
 
 -- Delete any existing words to start fresh
-DELETE FROM `words`;
+-- (Removed to avoid FOREIGN KEY constraint error with existing game_sessions)
 
 -- Answer words with assigned dates (one per day)
 INSERT OR IGNORE INTO `words` (`word`, `date_used`) VALUES

@@ -1,6 +1,6 @@
 import { eq, and } from 'drizzle-orm'
 import { z } from 'zod'
-import { gameSessions } from '#server/database/schema'
+import { gameSessions, words } from '#server/database/schema'
 
 const guessSchema = z.object({
     guess: z.string().length(5).transform(val => val.toLowerCase()),
@@ -26,14 +26,9 @@ export default defineEventHandler(async (event) => {
         throw createError({ statusCode: 422, message: 'Not a valid word.' })
     }
 
-    // Get today's word
-    const todayWord = await getTodaysWord(event)
-    if (!todayWord) {
-        throw createError({ statusCode: 404, message: 'No puzzle available for today.' })
-    }
-
     // Get or create session
     let session: typeof gameSessions.$inferSelect | undefined
+    let answerWordObj: { id: number, word: string } | null = null
 
     if (sessionId) {
         const result = await db
@@ -49,21 +44,36 @@ export default defineEventHandler(async (event) => {
         session = result[0]
     }
 
-    if (!session) {
-        // Check if player already has a session for today's word
-        const existing = await db
-            .select()
-            .from(gameSessions)
-            .where(
-                and(
-                    eq(gameSessions.playerId, playerId),
-                    eq(gameSessions.wordId, todayWord.id),
-                ),
-            )
-            .limit(1)
+    if (session) {
+        const wordRow = await db.select().from(words).where(eq(words.id, session.wordId)).limit(1)
+        if (wordRow[0]) {
+            answerWordObj = { id: wordRow[0].id, word: wordRow[0].word }
+        }
+    }
 
-        if (existing[0]) {
-            session = existing[0]
+    if (!answerWordObj) {
+        const todayWord = await getTodaysWord(event)
+        if (!todayWord) {
+            throw createError({ statusCode: 404, message: 'No puzzle available for today.' })
+        }
+        answerWordObj = { id: todayWord.id, word: todayWord.word }
+
+        if (!session) {
+            // Check if player already has a session for today's word
+            const existing = await db
+                .select()
+                .from(gameSessions)
+                .where(
+                    and(
+                        eq(gameSessions.playerId, playerId),
+                        eq(gameSessions.wordId, todayWord.id),
+                    ),
+                )
+                .limit(1)
+
+            if (existing[0]) {
+                session = existing[0]
+            }
         }
     }
 
@@ -72,7 +82,7 @@ export default defineEventHandler(async (event) => {
     }
 
     // Compute feedback
-    const feedback = computeFeedback(guess, todayWord.word)
+    const feedback = computeFeedback(guess, answerWordObj.word)
     const isCorrect = feedback.every(f => f === 'correct')
 
     if (!session) {
@@ -85,7 +95,7 @@ export default defineEventHandler(async (event) => {
         await db.insert(gameSessions).values({
             id: newId,
             playerId,
-            wordId: todayWord.id,
+            wordId: answerWordObj.id,
             guesses: JSON.stringify(guesses),
             status,
             attempts,
@@ -98,7 +108,7 @@ export default defineEventHandler(async (event) => {
             guesses: [{ word: guess, feedback }],
             status,
             attempts,
-            answer: status === 'lost' ? todayWord.word : undefined,
+            answer: status === 'lost' ? answerWordObj.word : undefined,
         }
     }
 
@@ -121,7 +131,7 @@ export default defineEventHandler(async (event) => {
     // Build full feedback for all guesses
     const allFeedback = existingGuesses.map(g => ({
         word: g,
-        feedback: computeFeedback(g, todayWord.word),
+        feedback: computeFeedback(g, answerWordObj!.word),
     }))
 
     return {
@@ -129,7 +139,7 @@ export default defineEventHandler(async (event) => {
         guesses: allFeedback,
         status,
         attempts,
-        answer: status === 'lost' ? todayWord.word : undefined,
+        answer: status === 'lost' ? answerWordObj!.word : undefined,
     }
 })
 
