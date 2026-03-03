@@ -16,7 +16,7 @@ const rows = [
 function getKeyColor(key: string): string {
   const state = keyStates.value[key]
   if (state === 'correct') return 'bg-primary text-white border-primary hover:bg-primary/80'
-  if (state === 'present') return 'bg-amber-500 text-white border-amber-500 hover:bg-amber-600'
+  if (state === 'present') return '!bg-amber-500 text-white !border-amber-500 hover:!bg-amber-600'
   if (state === 'absent') return 'bg-muted text-muted border-muted hover:bg-muted/80'
   return 'bg-elevated text-default border-default hover:bg-muted'
 }
@@ -46,15 +46,17 @@ function getKeyWidth(key: string): string {
       :key="rowIdx"
       class="flex gap-1 sm:gap-1.5 justify-center"
     >
+      <!-- eslint-disable-next-line atx/no-native-button -->
       <button
         v-for="key in row"
         :key="key"
+        variant="ghost"
+        color="neutral"
         :class="[
-          'keyboard-key h-14 sm:h-14 rounded-md font-bold text-xs sm:text-sm px-1 border',
+          'keyboard-key h-14 sm:h-14 font-bold text-xs sm:text-sm px-1 border uppercase flex items-center justify-center',
           getKeyColor(key),
           getKeyWidth(key),
         ]"
-        type="button"
         @click="handleKey(key)"
       >
         {{ getKeyLabel(key) }}

@@ -7,9 +7,7 @@ const emit = defineEmits<{
   'update:open': [value: boolean]
 }>()
 
-const { data: stats, refresh } = await useAsyncData('player-stats', () => $fetch('/api/stats'), {
-  immediate: false,
-})
+const { data: stats, refresh } = await usePlayerStats()
 
 watch(() => props.open, async (isOpen) => {
   if (isOpen) await refresh()
@@ -26,15 +24,28 @@ function getBarWidth(count: number): string {
 }
 
 function getDistCount(i: number): number {
-  if (!stats.value) return 0
+  if (!stats.value || !('guessDistribution' in stats.value)) return 0
   return (stats.value.guessDistribution as Record<string, number>)[String(i)] ?? 0
 }
+
+function getDistributionBarClass(i: number) {
+  return getDistCount(i) > 0 ? 'bg-primary' : 'bg-muted'
+}
+
+function getDistributionBarStyle(i: number) {
+  return { width: getBarWidth(getDistCount(i)) }
+}
+
+function handleUpdateOpen(val: boolean) {
+  emit('update:open', val)
+}
+
 </script>
 
 <template>
   <UModal
     :open="props.open"
-    @update:open="emit('update:open', $event)"
+    @update:open="handleUpdateOpen"
   >
     <template #header>
       <h2 class="text-xl font-bold font-display">
@@ -96,8 +107,8 @@ function getDistCount(i: number): number {
               <span class="w-3 text-xs font-bold text-dimmed">{{ i }}</span>
               <div
                 class="distribution-bar h-5 rounded-sm flex items-center justify-end px-1.5 text-xs font-bold text-white"
-                :class="getDistCount(i) > 0 ? 'bg-primary' : 'bg-muted'"
-                :style="{ width: getBarWidth(getDistCount(i)) }"
+                :class="getDistributionBarClass(i)"
+                :style="getDistributionBarStyle(i)"
               >
                 {{ getDistCount(i) }}
               </div>
