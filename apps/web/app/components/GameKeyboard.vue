@@ -6,6 +6,7 @@ const emit = defineEmits<{
 }>()
 
 const { keyStates } = useGame()
+const haptics = useHaptics()
 
 const rows = [
   ['q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p'],
@@ -15,13 +16,14 @@ const rows = [
 
 function getKeyColor(key: string): string {
   const state = keyStates.value[key]
-  if (state === 'correct') return 'bg-emerald-500 text-white border-[3px] border-b-[6px] border-emerald-600 hover:bg-emerald-400 active:translate-y-[3px] active:border-b-[3px]'
-  if (state === 'present') return 'bg-orange-500 text-white border-[3px] border-b-[6px] border-orange-600 hover:bg-orange-400 active:translate-y-[3px] active:border-b-[3px]'
-  if (state === 'absent') return 'bg-slate-200 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-[3px] border-slate-300 dark:border-slate-700 opacity-80'
-  return 'bg-white dark:bg-slate-800 text-indigo-950 dark:text-indigo-100 border-[3px] border-b-[6px] border-indigo-200 dark:border-indigo-900 hover:bg-indigo-50 dark:hover:bg-slate-700 active:translate-y-[3px] active:border-b-[3px]'
+  if (state === 'correct') return 'bg-green-600 text-white hover:bg-green-500'
+  if (state === 'present') return 'bg-yellow-500 text-white hover:bg-yellow-400'
+  if (state === 'absent') return 'bg-gray-500 dark:bg-gray-600 text-white opacity-80'
+  return 'bg-gray-200 dark:bg-gray-500 text-gray-900 dark:text-white hover:bg-gray-300 dark:hover:bg-gray-400'
 }
 
 function handleKey(key: string) {
+  haptics.lightTap()
   if (key === 'enter') emit('enter')
   else if (key === 'backspace') emit('backspace')
   else emit('key', key)
