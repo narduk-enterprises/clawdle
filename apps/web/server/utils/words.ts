@@ -1,6 +1,7 @@
 import type { H3Event } from 'h3'
 import { eq } from 'drizzle-orm'
 import { words } from '#server/database/schema'
+import { VALID_WORDS } from './dictionary'
 
 /**
  * Get today's word entry based on current UTC date.
@@ -20,14 +21,22 @@ export async function getTodaysWord(event: H3Event) {
 }
 
 /**
- * Check if a guess is a valid word in the word list.
+ * Check if a guess is a valid word.
+ * Uses the in-memory dictionary (~12,970 words) for fast O(1) lookups.
+ * Falls back to the DB if needed (e.g. for custom words added later).
  */
 export async function isValidWord(event: H3Event, guess: string): Promise<boolean> {
+    const normalized = guess.toLowerCase()
+
+    // Fast in-memory check against the comprehensive dictionary
+    if (VALID_WORDS.has(normalized)) return true
+
+    // Fallback: check DB for any custom words added outside the dictionary
     const db = useAppDatabase(event)
     const result = await db
         .select({ id: words.id })
         .from(words)
-        .where(eq(words.word, guess.toLowerCase()))
+        .where(eq(words.word, normalized))
         .limit(1)
 
     return result.length > 0
