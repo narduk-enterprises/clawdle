@@ -50,38 +50,40 @@ export function useHaptics() {
  * Falls back to a Safari-specific selection trick for iOS Taptic Engine.
  */
 function vibrate(pattern: number | number[]): void {
-    // Standard Vibration API (Android Chrome, etc.)
-    if ('vibrate' in navigator) {
+    if (import.meta.client) {
+        // Standard Vibration API (Android Chrome, etc.)
+        if ('vibrate' in navigator) {
+            try {
+                navigator.vibrate(pattern)
+                return
+            }
+            catch {
+                // Vibration API might be blocked; fall through to fallback
+            }
+        }
+
+        // iOS Safari fallback: trigger selection change which can invoke Taptic Engine
         try {
-            navigator.vibrate(pattern)
-            return
+            const el = document.createElement('div')
+            el.style.position = 'fixed'
+            el.style.top = '-100px'
+            el.style.opacity = '0'
+            el.style.pointerEvents = 'none'
+            el.textContent = '\u200b' // zero-width space
+            document.body.appendChild(el)
+            const range = document.createRange()
+            range.selectNode(el)
+            const selection = window.getSelection()
+            selection?.removeAllRanges()
+            selection?.addRange(range)
+            // Clean up after a frame
+            requestAnimationFrame(() => {
+                selection?.removeAllRanges()
+                el.remove()
+            })
         }
         catch {
-            // Vibration API might be blocked; fall through to fallback
+            // Silently fail if this trick doesn't work
         }
-    }
-
-    // iOS Safari fallback: trigger selection change which can invoke Taptic Engine
-    try {
-        const el = document.createElement('div')
-        el.style.position = 'fixed'
-        el.style.top = '-100px'
-        el.style.opacity = '0'
-        el.style.pointerEvents = 'none'
-        el.textContent = '\u200b' // zero-width space
-        document.body.appendChild(el)
-        const range = document.createRange()
-        range.selectNode(el)
-        const selection = window.getSelection()
-        selection?.removeAllRanges()
-        selection?.addRange(range)
-        // Clean up after a frame
-        requestAnimationFrame(() => {
-            selection?.removeAllRanges()
-            el.remove()
-        })
-    }
-    catch {
-        // Silently fail if this trick doesn't work
     }
 }
