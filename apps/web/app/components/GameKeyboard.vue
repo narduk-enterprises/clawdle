@@ -15,10 +15,10 @@ const rows = [
 
 function getKeyColor(key: string): string {
   const state = keyStates.value[key]
-  if (state === 'correct') return 'bg-primary text-white border-primary hover:bg-primary/80'
-  if (state === 'present') return '!bg-amber-500 text-white !border-amber-500 hover:!bg-amber-600'
-  if (state === 'absent') return 'bg-muted text-muted border-muted hover:bg-muted/80'
-  return 'bg-elevated text-default border-default hover:bg-muted'
+  if (state === 'correct') return 'bg-emerald-500 text-white border-[3px] border-b-[6px] border-emerald-600 hover:bg-emerald-400 active:translate-y-[3px] active:border-b-[3px]'
+  if (state === 'present') return 'bg-orange-500 text-white border-[3px] border-b-[6px] border-orange-600 hover:bg-orange-400 active:translate-y-[3px] active:border-b-[3px]'
+  if (state === 'absent') return 'bg-slate-200 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-[3px] border-slate-300 dark:border-slate-700 opacity-80'
+  return 'bg-white dark:bg-slate-800 text-indigo-950 dark:text-indigo-100 border-[3px] border-b-[6px] border-indigo-200 dark:border-indigo-900 hover:bg-indigo-50 dark:hover:bg-slate-700 active:translate-y-[3px] active:border-b-[3px]'
 }
 
 function handleKey(key: string) {
@@ -50,10 +50,8 @@ function getKeyWidth(key: string): string {
       <button
         v-for="key in row"
         :key="key"
-        variant="ghost"
-        color="neutral"
         :class="[
-          'keyboard-key h-14 sm:h-14 font-bold text-xs sm:text-sm px-1 border uppercase flex items-center justify-center',
+          'keyboard-key h-14 sm:h-[3.75rem] font-display font-bold text-sm sm:text-base rounded-xl transition-all duration-100 uppercase flex items-center justify-center',
           getKeyColor(key),
           getKeyWidth(key),
         ]"
