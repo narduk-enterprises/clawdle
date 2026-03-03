@@ -7,7 +7,7 @@ const emit = defineEmits<{
   'update:open': [value: boolean]
 }>()
 
-const { gameState, nextPuzzleTime, getShareText } = useGame()
+const { gameState, getNextPuzzleTime, getShareText } = useGame()
 const toast = useToast()
 
 const modalTitle = computed(() => gameState.value.status === 'won' ? '🎉 You got it!' : '😿 Better luck next time')
@@ -25,7 +25,7 @@ const countdown = ref('')
 let countdownInterval: ReturnType<typeof setInterval> | null = null
 
 function updateCountdown() {
-  const ms = nextPuzzleTime.value
+  const ms = getNextPuzzleTime()
   const hours = Math.floor(ms / (1000 * 60 * 60))
   const minutes = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60))
   const seconds = Math.floor((ms % (1000 * 60)) / 1000)

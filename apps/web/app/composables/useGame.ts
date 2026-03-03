@@ -180,18 +180,17 @@ export function useGame() {
     }
 
     function checkHardMode(guess: string): string | null {
-        const lastGuess = gameState.value.guesses.at(-1)
-        if (!lastGuess) return null
-
-        for (let i = 0; i < 5; i++) {
-            if (lastGuess.feedback[i] === 'correct' && guess[i] !== lastGuess.word[i]) {
-                return `${(i + 1)}${ordinalSuffix(i + 1)} letter must be ${lastGuess.word[i]!.toUpperCase()}`
+        for (const prevGuess of gameState.value.guesses) {
+            for (let i = 0; i < 5; i++) {
+                if (prevGuess.feedback[i] === 'correct' && guess[i] !== prevGuess.word[i]) {
+                    return `${(i + 1)}${ordinalSuffix(i + 1)} letter must be ${prevGuess.word[i]!.toUpperCase()}`
+                }
             }
-        }
 
-        for (let i = 0; i < 5; i++) {
-            if (lastGuess.feedback[i] === 'present' && !guess.includes(lastGuess.word[i]!)) {
-                return `Guess must contain ${lastGuess.word[i]!.toUpperCase()}`
+            for (let i = 0; i < 5; i++) {
+                if (prevGuess.feedback[i] === 'present' && !guess.includes(prevGuess.word[i]!)) {
+                    return `Guess must contain ${prevGuess.word[i]!.toUpperCase()}`
+                }
             }
         }
 
@@ -246,11 +245,11 @@ export function useGame() {
 
     // ─── Countdown ────────────────────────────────────────
 
-    const nextPuzzleTime = computed(() => {
+    function getNextPuzzleTime(): number {
         const now = new Date()
         const tomorrow = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1))
         return tomorrow.getTime() - now.getTime()
-    })
+    }
 
     return {
         board,
@@ -261,7 +260,7 @@ export function useGame() {
         shakeRow,
         bounceRow,
         keyStates,
-        nextPuzzleTime,
+        getNextPuzzleTime,
         initGame,
         addLetter,
         removeLetter,
