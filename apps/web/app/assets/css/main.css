@@ -1,0 +1,137 @@
+@import 'tailwindcss';
+@import '@nuxt/ui';
+
+@theme {
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-display: 'Outfit', system-ui, sans-serif;
+
+  --radius-card: 0.75rem;
+  --radius-button: 0.5rem;
+  --radius-badge: 9999px;
+  --radius-input: 0.5rem;
+
+  --shadow-card: 0 2px 8px -2px rgba(0, 0, 0, 0.1), 0 1px 3px -1px rgba(0, 0, 0, 0.06);
+  --shadow-elevated: 0 8px 24px -4px rgba(0, 0, 0, 0.12), 0 4px 8px -2px rgba(0, 0, 0, 0.08);
+
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-base: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-spring: 500ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* ─── Tile Animations ─────────────────────────────────── */
+
+@keyframes flip-in {
+  0% {
+    transform: rotateX(0deg);
+  }
+  50% {
+    transform: rotateX(-90deg);
+  }
+  100% {
+    transform: rotateX(0deg);
+  }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  10%, 90% { transform: translateX(-2px); }
+  20%, 80% { transform: translateX(4px); }
+  30%, 70% { transform: translateX(-6px); }
+  40%, 60% { transform: translateX(6px); }
+  50% { transform: translateX(-6px); }
+}
+
+@keyframes bounce-tile {
+  0%, 100% { transform: translateY(0); }
+  30% { transform: translateY(-20px); }
+  50% { transform: translateY(-10px); }
+  70% { transform: translateY(-5px); }
+}
+
+@keyframes pop-in {
+  0% { transform: scale(0.8); opacity: 0; }
+  40% { transform: scale(1.1); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes key-press {
+  0% { transform: scale(1); }
+  50% { transform: scale(0.92); }
+  100% { transform: scale(1); }
+}
+
+@keyframes fade-in-up {
+  0% { opacity: 0; transform: translateY(10px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+.animate-flip {
+  animation: flip-in 500ms ease-in-out forwards;
+  transform-style: preserve-3d;
+}
+
+.animate-shake {
+  animation: shake 600ms ease-in-out;
+}
+
+.animate-bounce-tile {
+  animation: bounce-tile 800ms ease-in-out;
+}
+
+.animate-pop {
+  animation: pop-in 100ms ease-out;
+}
+
+.animate-key-press {
+  animation: key-press 100ms ease-out;
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 300ms ease-out forwards;
+}
+
+/* ─── Game Grid ───────────────────────────────────────── */
+
+.game-tile {
+  perspective: 500px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-weight: 700;
+  text-transform: uppercase;
+  user-select: none;
+}
+
+.tile-inner {
+  transition: background-color var(--transition-base),
+              border-color var(--transition-base),
+              color var(--transition-base);
+}
+
+.tile-filled {
+  border-color: var(--color-neutral-400);
+}
+
+:is(.dark) .tile-filled {
+  border-color: var(--color-neutral-500);
+}
+
+/* ─── Distribution Bar ────────────────────────────────── */
+
+.distribution-bar {
+  transition: width var(--transition-slow);
+}
+
+/* ─── Keyboard ────────────────────────────────────────── */
+
+.keyboard-key {
+  transition: transform 80ms ease-out, background-color var(--transition-fast);
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.keyboard-key:active {
+  transform: scale(0.95);
+}
