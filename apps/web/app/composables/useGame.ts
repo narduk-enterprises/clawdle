@@ -33,6 +33,7 @@ export function useGame() {
 
     const settings = useSettings()
     const toast = useToast()
+    const haptics = useHaptics()
 
     // ─── Actions ──────────────────────────────────────────
 
@@ -98,6 +99,7 @@ export function useGame() {
         if (gameState.value.status !== 'in_progress') return
         if (currentCol.value < 5) {
             toast.add({ title: 'Not enough letters' })
+            haptics.errorTap()
             triggerShake()
             return
         }
@@ -110,6 +112,7 @@ export function useGame() {
             const violation = checkHardMode(guess)
             if (violation) {
                 triggerShake()
+                haptics.errorTap()
                 toast.add({ title: violation, color: 'warning' })
                 return
             }
@@ -137,6 +140,7 @@ export function useGame() {
 
             if (result.status === 'won') {
                 bounceRow.value = currentRow.value
+                haptics.successTap()
                 const messages = ['Genius!', 'Magnificent!', 'Impressive!', 'Splendid!', 'Great!', 'Phew!']
                 toast.add({ title: messages[result.attempts - 1] ?? 'Nice!', color: 'success' })
                 // Update stats
@@ -146,6 +150,7 @@ export function useGame() {
                     headers: { 'X-Requested-With': 'XMLHttpRequest' },
                 })
             } else if (result.status === 'lost') {
+                haptics.errorTap()
                 toast.add({ title: result.answer?.toUpperCase() ?? 'Game over', color: 'error' })
                 await $fetch('/api/stats/update', {
                     method: 'POST',
@@ -161,6 +166,7 @@ export function useGame() {
             const err = error as { data?: { message?: string } }
             if (err.data?.message === 'Not a valid word.') {
                 triggerShake()
+                haptics.errorTap()
                 toast.add({ title: 'Not in word list', color: 'error' })
             } else if (err.data?.message) {
                 toast.add({ title: err.data.message, color: 'error' })

@@ -8,13 +8,13 @@ const props = defineProps<{
 }>()
 
 const tileClass = computed(() => {
-  const base = 'game-tile flex-1 aspect-square max-w-[4rem] sm:max-w-[4.5rem] text-3xl sm:text-4xl rounded-2xl font-display font-bold select-none flex items-center justify-center leading-none transition-all duration-200'
+  const base = 'game-tile flex-1 aspect-square max-w-[4rem] sm:max-w-[4.5rem] text-3xl sm:text-4xl rounded-lg font-display font-bold select-none flex items-center justify-center leading-none transition-all duration-200'
   const states: Record<string, string> = {
-    empty: 'border-[3px] border-slate-300 dark:border-slate-700 bg-white/50 dark:bg-black/20',
-    tbd: 'border-[3px] border-b-[6px] border-indigo-400 dark:border-indigo-500 bg-white dark:bg-slate-800 text-indigo-950 dark:text-indigo-50 shadow-sm transform -translate-y-0.5',
-    correct: 'border-[3px] border-b-[6px] border-emerald-600 bg-emerald-500 text-white shadow-[0_0_15px_rgba(16,185,129,0.4)]',
-    present: 'border-[3px] border-b-[6px] border-orange-600 bg-orange-500 text-white shadow-[0_0_15px_rgba(249,115,22,0.4)]',
-    absent: 'border-[3px] border-b-[3px] border-slate-400 dark:border-slate-700 bg-slate-200 dark:bg-slate-800/80 text-slate-500 dark:text-slate-400 opacity-90',
+    empty: 'border-2 border-gray-300 dark:border-gray-600',
+    tbd: 'border-2 border-gray-500 dark:border-gray-400 text-gray-900 dark:text-white',
+    correct: 'border-2 border-green-700 bg-green-600 text-white',
+    present: 'border-2 border-yellow-600 bg-yellow-500 text-white',
+    absent: 'border-2 border-gray-600 bg-gray-500 dark:bg-gray-600 text-white',
   }
   return `${base} ${states[props.state] || states.empty}`
 })
