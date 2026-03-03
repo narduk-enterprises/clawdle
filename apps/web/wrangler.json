@@ -16,7 +16,13 @@
     {
       "binding": "DB",
       "database_name": "clawdle-db",
-      "database_id": "2176c867-da11-4328-a79a-852fa713ca9e"
+      "database_id": "a501785e-af2c-4bda-9845-3af8b365b7fe"
+    }
+  ],
+  "routes": [
+    {
+      "pattern": "clawdle.loganrenz.com",
+      "custom_domain": true
     }
   ]
 }
