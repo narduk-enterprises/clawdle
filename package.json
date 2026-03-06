@@ -25,7 +25,9 @@
     "prebuild": "node tools/check-setup.cjs",
     "preship": "node tools/check-setup.cjs",
     "postinstall": "node -e \"if(!require('fs').existsSync('.setup-complete'))console.log('\\n⚠️  Run pnpm run setup before doing anything else! See AGENTS.md.\\n')\"",
-    "predeploy": "node tools/check-setup.cjs"
+    "predeploy": "node tools/check-setup.cjs",
+    "format": "prettier --write \"**/*.{ts,mts,vue,js,mjs,json,yaml,yml,css,md}\" --ignore-path .gitignore",
+    "format:check": "prettier --check \"**/*.{ts,mts,vue,js,mjs,json,yaml,yml,css,md}\" --ignore-path .gitignore"
   },
   "pnpm": {
     "overrides": {
@@ -57,6 +59,7 @@
     "concurrently": "^9.2.1",
     "sharp": "^0.34.5",
     "turbo": "^2.8.12",
-    "tsx": "^4.21.0"
+    "tsx": "^4.21.0",
+    "prettier": "^3.8.1"
   }
 }
