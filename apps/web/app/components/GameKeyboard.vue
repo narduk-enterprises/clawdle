@@ -48,7 +48,7 @@ function getKeyWidth(key: string): string {
       :key="rowIdx"
       class="flex gap-1 sm:gap-1.5 justify-center w-full"
     >
-      <!-- eslint-disable-next-line atx/no-native-button -->
+      <!-- eslint-disable-next-line narduk/no-native-button -- keyboard keys use a native <button> element for custom game UI styling that would be overridden by Nuxt UI defaults -->
       <button
         v-for="key in row"
         :key="key"
