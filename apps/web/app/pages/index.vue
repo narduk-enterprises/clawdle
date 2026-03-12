@@ -7,7 +7,7 @@ useSeo({
   ogImage: { title: 'Clawdle', description: 'Daily Word Puzzle', icon: '🐾' },
 })
 
-// eslint-disable-next-line narduk/prefer-use-seo-over-bare-meta
+// eslint-disable-next-line narduk/prefer-use-seo-over-bare-meta -- useHead for viewport and og:image path; useSeo does not support viewport-fit or custom og:image
 useHead({
   meta: [
     { name: 'description', content: 'Guess the 5-letter word in 6 tries with color-coded clues. A new puzzle every day!' },
