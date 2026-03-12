@@ -17,8 +17,8 @@ Read `AGENTS.md` at the project root for full project rules and conventions.
   D1 (SQLite) and Drizzle ORM.
 - **NO Node.js**: Cloudflare Workers isolates do not support Node built-ins
   (`fs`, `crypto`, `path`). Use the Web Crypto API.
-- **Nuxt 4 Structure**: All frontend code must go in `app/` (e.g.,
-  `app/components/`, `app/pages/`).
+- **Nuxt 4 Structure**: All frontend code must go in `apps/web/app/` (e.g.,
+  `apps/web/app/components/`, `apps/web/app/pages/`).
 - **Nuxt UI 4**: Use `USeparator` instead of `UDivider`. Icons use the `i-`
   prefix (e.g., `i-lucide-home`).
 - **Tailwind v4**: Configured via `@theme` variables in `main.css`, not a
