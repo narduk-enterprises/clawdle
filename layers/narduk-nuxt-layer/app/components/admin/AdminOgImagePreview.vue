@@ -27,9 +27,10 @@ function onLoad() {
 
 // Ensure downloading works properly
 function downloadImage() {
+  if (!import.meta.client) return
   const link = document.createElement('a')
   link.href = fullOgUrl.value
-  link.download = `og-${props.label.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.png`
+  link.download = `og-${props.label.replaceAll(/[^a-z0-9]/gi, '_').toLowerCase()}.png`
   document.body.appendChild(link)
   link.click()
   document.body.removeChild(link)
