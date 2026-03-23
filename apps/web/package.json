@@ -5,7 +5,7 @@
   "version": "1.11.14",
   "scripts": {
     "build": "nuxt build",
-    "dev": "nuxt dev",
+    "dev": "(doppler run -- nuxt dev || nuxt dev)",
     "db:migrate": "bash ../../tools/db-migrate.sh clawdle-db --local --dir node_modules/@narduk-enterprises/narduk-nuxt-template-layer/drizzle --dir drizzle",
     "db:seed": "wrangler d1 execute clawdle-db --local --yes --file=drizzle/0002_seed_words.sql",
     "db:studio": "drizzle-kit studio",
@@ -18,7 +18,8 @@
     "quality": "echo 'Turbo dependsOn handles lint + typecheck + format:check'",
     "db:reset": "bash ../../tools/db-migrate.sh clawdle-db --local --dir node_modules/@narduk-enterprises/narduk-nuxt-template-layer/drizzle --dir drizzle --reset && pnpm run db:seed",
     "db:ready": "pnpm run db:migrate && pnpm run db:seed",
-    "db:verify": "node node_modules/@narduk-enterprises/narduk-nuxt-template-layer/testing/verify-local-db.mjs ."
+    "db:verify": "node node_modules/@narduk-enterprises/narduk-nuxt-template-layer/testing/verify-local-db.mjs .",
+    "predev": "pnpm run db:ready"
   },
   "dependencies": {
     "@narduk-enterprises/narduk-nuxt-template-layer": "workspace:*",
