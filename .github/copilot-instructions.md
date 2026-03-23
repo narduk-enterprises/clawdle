@@ -10,6 +10,19 @@ for Cursor, Codex, GitHub Copilot, and Google Antigravity. When a task fits a
 packaged skill there, read its `SKILL.md` and any referenced assets from that
 tree before improvising.
 
+### Installing new skills
+
+```bash
+# From a GitHub repo (open standard)
+npx skills add https://github.com/<owner>/<repo> --skill <name>
+
+# Interactive scaffolding via agent workflow
+/skill-create
+```
+
+See `docs/agents/skills.md` for full architecture, fleet distribution, and the
+skills inventory.
+
 ## Architecture & Monorepo
 
 - **PNPM Workspace**: The main application lives in `apps/web/`.
