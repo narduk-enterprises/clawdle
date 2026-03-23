@@ -15,6 +15,7 @@ export function runCommand(command: string, args: string[], options: CommandOpti
     env: options.env,
   })
 
+  if (stdout === null) return ''
   return typeof stdout === 'string' ? stdout : stdout.toString(options.encoding ?? 'utf-8')
 }
 
