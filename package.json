@@ -11,7 +11,7 @@
     "prelint": "pnpm run build:plugins",
     "lint": "pnpm run prelint && turbo run lint",
     "typecheck": "turbo run typecheck",
-    "quality": "pnpm run quality:fix && turbo run quality --filter='./apps/*'",
+    "quality": "pnpm run quality:fix && pnpm run quality:check",
     "setup": "npx tsx tools/init.ts",
     "update-layer": "npx tsx tools/update-layer.ts",
     "validate": "doppler run -- npx tsx tools/validate.ts",
@@ -23,15 +23,19 @@
     "generate:favicons": "npx tsx tools/generate-favicons.ts",
     "predev": "node tools/check-setup.cjs",
     "prebuild": "node tools/check-setup.cjs",
-    "preship": "node tools/check-setup.cjs && pnpm install --frozen-lockfile && npx tsx tools/check-drift-ci.ts && npx tsx tools/check-sync-health.ts && pnpm run quality",
+    "preship": "node tools/check-setup.cjs && pnpm install --frozen-lockfile && npx tsx tools/check-drift-ci.ts && npx tsx tools/check-sync-health.ts && pnpm run quality:check",
     "postinstall": "node -e \"if(!require('fs').existsSync('.setup-complete'))console.log('\\n⚠️  Run pnpm run setup before doing anything else! See AGENTS.md.\\n')\"",
     "predeploy": "node tools/check-setup.cjs",
-    "format": "prettier --write \"**/*.{ts,mts,vue,js,mjs,json,yaml,yml,css,md}\" --ignore-path .gitignore",
-    "format:check": "prettier --check \"**/*.{ts,mts,vue,js,mjs,json,yaml,yml,css,md}\" --ignore-path .gitignore",
+    "format": "prettier --write \"**/*.{ts,mts,vue,js,mjs,json,yaml,yml,css,md}\"",
+    "format:check": "prettier --check \"**/*.{ts,mts,vue,js,mjs,json,yaml,yml,css,md}\"",
     "tail": "npx tsx tools/tail.ts",
     "check:sync-health": "npx tsx tools/check-sync-health.ts",
     "quality:fix": "turbo run lint --force -- --fix && pnpm run format",
-    "sync-template": "npx tsx tools/sync-template.ts ."
+    "sync-template": "npx tsx tools/sync-template.ts .",
+    "hooks:install": "node tools/install-git-hooks.cjs",
+    "guardrails:repo": "npx tsx tools/check-guardrails.ts",
+    "quality:check": "pnpm run guardrails:repo && turbo run quality --filter='./apps/*'",
+    "check": "pnpm run quality:check"
   },
   "pnpm": {
     "overrides": {
