@@ -12,7 +12,7 @@
     "lint": "pnpm run prelint && turbo run lint",
     "typecheck": "turbo run typecheck",
     "quality": "pnpm run quality:fix && pnpm run quality:check",
-    "setup": "pnpm exec tsx tools/init.ts",
+    "setup": "pnpm run skills:link",
     "update-layer": "pnpm exec tsx tools/update-layer.ts",
     "validate": "pnpm exec tsx tools/validate.ts",
     "clean": "find . -type d \\( -name node_modules -o -name .nuxt -o -name .output -o -name .nitro -o -name .wrangler -o -name .turbo -o -name .data -o -name dist \\) -not -path './.git/*' -prune -exec rm -rf {} +",
@@ -23,8 +23,8 @@
     "generate:favicons": "pnpm exec tsx tools/generate-favicons.ts",
     "predev": "node tools/check-setup.cjs",
     "prebuild": "node tools/check-setup.cjs",
-    "preship": "node tools/check-setup.cjs && pnpm install --frozen-lockfile && pnpm exec tsx tools/check-drift-ci.ts && pnpm exec tsx tools/check-sync-health.ts && pnpm run quality:check",
-    "postinstall": "node -e \"if(!require('fs').existsSync('.setup-complete'))console.log('\\n⚠️  Run pnpm run setup before doing anything else! See AGENTS.md.\\n')\"",
+    "preship": "node tools/check-setup.cjs && pnpm install --frozen-lockfile && pnpm audit --audit-level=critical && pnpm exec tsx tools/check-drift-ci.ts && pnpm exec tsx tools/check-sync-health.ts && pnpm run quality:check",
+    "postinstall": "node -e \"if(!require('fs').existsSync('.setup-complete'))console.log('\\n⚠️  New apps: provision via the control plane (see AGENTS.md). Generated starters get .setup-complete from provisioning.\\n')\"",
     "format": "prettier --write \"**/*.{ts,mts,vue,js,mjs,json,yaml,yml,css,md}\"",
     "format:check": "prettier --check \"**/*.{ts,mts,vue,js,mjs,json,yaml,yml,css,md}\"",
     "check:sync-health": "pnpm exec tsx tools/check-sync-health.ts",
@@ -36,7 +36,8 @@
     "check": "pnpm run quality:check",
     "skills:link": "pnpm exec tsx tools/ensure-skills-links.ts",
     "cleanup:node-leaks": "sh scripts/cleanup-node-leaks.sh",
-    "test:e2e:web": "pnpm --filter web test:e2e"
+    "test:e2e:web": "pnpm --filter web test:e2e",
+    "skills:publish": "sh scripts/sync-skills.sh publish"
   },
   "pnpm": {
     "overrides": {

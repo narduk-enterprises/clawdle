@@ -2,13 +2,19 @@
 
 Read `AGENTS.md` at the project root for full project rules and conventions.
 
-## User skills (`~/.skills`)
+## Repo skills
 
-`pnpm run skills:link` and `pnpm run sync-template` symlink `.cursor/skills`,
-`.codex/skills`, `.agent/skills`, and `.github/skills` directly to `~/.skills`
-for Cursor, Codex, GitHub Copilot, and Google Antigravity. When a task fits a
-packaged skill there, read its `SKILL.md` and any referenced assets from that
-tree before improvising.
+Committed repo skills live in `.github/skills/` when that directory exists.
+Older or authoring-oriented checkouts may still keep the editable source under
+`.agents/skills/`, and local agent links fall back there only when
+`.github/skills/` is absent. The entry points `.agent/skills`, `.cursor/skills`,
+`.codex/skills`, and `.claude/skills` are repaired to the committed repo skill
+surface so GitHub Copilot and local agents read the same vendored payload from
+the checkout.
+
+`pnpm run skills:link` only repairs those repo-local symlinks if they drift. It
+does not pull from `~/.skills`, and it does not overwrite committed
+`.github/skills` content.
 
 ### Installing new skills
 

@@ -87,7 +87,14 @@ export default defineNuxtConfig({
   },
 
   runtimeConfig: {
-    /** Optional: secret for cron routes (e.g. cache warming). Set CRON_SECRET in Doppler; init.ts provisions it. */
+    /**
+     * `d1` — default; `useDatabase()` uses the D1 `DB` binding.
+     * `postgres` — opt into Postgres via Hyperdrive + a Postgres Drizzle schema (see `useHyperdriveConnectionString`).
+     */
+    databaseBackend: process.env.NUXT_DATABASE_BACKEND === 'postgres' ? 'postgres' : 'd1',
+    /** Must match `hyperdrive[].binding` in wrangler (default `HYPERDRIVE`). */
+    hyperdriveBinding: process.env.NUXT_HYPERDRIVE_BINDING || 'HYPERDRIVE',
+    /** Optional: secret for cron routes (e.g. cache warming). Set CRON_SECRET in Doppler; provisioning sets it. */
     cronSecret: process.env.CRON_SECRET || '',
     ownerTagSecret: process.env.OWNER_TAG_SECRET || '',
     /** Optional shared UUID for PostHog `identify` after `/api/owner-tag` (same value across fleet = one owner person). */
@@ -97,6 +104,7 @@ export default defineNuxtConfig({
     session: {
       password: process.env.NUXT_SESSION_PASSWORD || '',
       cookie: {
+        // `secure: true` for prod; `$development` turns it off for `nuxt dev`. Avoid `import.meta.dev` here (unreliable in nuxt.config — nuxt/nuxt#32098).
         secure: true,
       },
     },
@@ -200,7 +208,7 @@ export default defineNuxtConfig({
       },
     },
     externals: {
-      inline: ['drizzle-orm'],
+      inline: ['drizzle-orm', '@neondatabase/serverless'],
     },
   },
 

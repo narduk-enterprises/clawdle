@@ -1,4 +1,5 @@
 import {
+  chmodSync,
   copyFileSync,
   existsSync,
   lstatSync,
@@ -19,6 +20,7 @@ import {
   FLEET_ROOT_SCRIPT_PATCHES,
   FLEET_WEB_SCRIPT_PATCHES,
   GENERATED_SYNC_FILES,
+  REFERENCE_BASELINE_FILES,
   RECURSIVE_SYNC_DIRECTORIES,
   STALE_SYNC_PATHS,
   VERBATIM_SYNC_FILES,
@@ -45,6 +47,11 @@ interface SyncCounters {
   removed: number
 }
 
+interface RepoSkillsRoot {
+  path: string
+  relativeDir: '.github/skills' | '.agents/skills'
+}
+
 function createCounters(): SyncCounters {
   return { copied: 0, skipped: 0, removed: 0 }
 }
@@ -68,8 +75,36 @@ function getOutput(command: string, args: string[], cwd: string): string {
   }
 }
 
+function getTrackedTemplatePaths(templateDir: string): Set<string> | null {
+  try {
+    const output = runCommand('git', ['ls-files', '-z'], {
+      cwd: templateDir,
+      encoding: 'utf-8',
+      stdio: ['ignore', 'pipe', 'ignore'],
+    })
+
+    return new Set(
+      output
+        .split('\0')
+        .map((entry) => entry.trim())
+        .filter(Boolean),
+    )
+  } catch {
+    return null
+  }
+}
+
 function ensureDir(filePath: string) {
   mkdirSync(dirname(filePath), { recursive: true })
+}
+
+function pathOccupied(filePath: string): boolean {
+  try {
+    lstatSync(filePath)
+    return true
+  } catch {
+    return false
+  }
 }
 
 function filesIdentical(left: string, right: string): boolean {
@@ -90,6 +125,14 @@ function symlinkTargetsMatch(left: string, right: string): boolean {
   }
 }
 
+function fileModesMatch(sourcePath: string, targetPath: string): boolean {
+  try {
+    return statSync(sourcePath).mode === statSync(targetPath).mode
+  } catch {
+    return false
+  }
+}
+
 function syncFile(
   sourcePath: string,
   targetPath: string,
@@ -97,23 +140,26 @@ function syncFile(
   counters: SyncCounters,
   dryRun: boolean,
   log: (message: string) => void,
+  label = relative(templateDir, sourcePath),
 ) {
   if (!existsSync(sourcePath)) return
 
   const srcLstat = lstatSync(sourcePath)
   if (srcLstat.isSymbolicLink()) {
     const wantTarget = readlinkSync(sourcePath, 'utf8')
-    if (existsSync(targetPath) && symlinkTargetsMatch(sourcePath, targetPath)) {
+    const occupied = pathOccupied(targetPath)
+
+    if (occupied && symlinkTargetsMatch(sourcePath, targetPath)) {
       counters.skipped += 1
       return
     }
 
-    const action = existsSync(targetPath) ? 'UPDATE' : 'ADD'
-    log(`  ${action}: ${relative(templateDir, sourcePath)}`)
+    const action = occupied ? 'UPDATE' : 'ADD'
+    log(`  ${action}: ${label}`)
 
     if (!dryRun) {
       ensureDir(targetPath)
-      if (existsSync(targetPath)) {
+      if (occupied) {
         rmSync(targetPath, { recursive: true, force: true })
       }
       symlinkSync(wantTarget, targetPath)
@@ -123,20 +169,53 @@ function syncFile(
     return
   }
 
-  if (existsSync(targetPath) && filesIdentical(sourcePath, targetPath)) {
+  if (
+    existsSync(targetPath) &&
+    filesIdentical(sourcePath, targetPath) &&
+    fileModesMatch(sourcePath, targetPath)
+  ) {
     counters.skipped += 1
     return
   }
 
   const action = existsSync(targetPath) ? 'UPDATE' : 'ADD'
-  log(`  ${action}: ${relative(templateDir, sourcePath)}`)
+  log(`  ${action}: ${label}`)
 
   if (!dryRun) {
     ensureDir(targetPath)
     copyFileSync(sourcePath, targetPath)
+    chmodSync(targetPath, srcLstat.mode)
   }
 
   counters.copied += 1
+}
+
+function collectTrackedPathsForDirectory(relativeDir: string, trackedPaths: Set<string>): string[] {
+  const prefix = `${relativeDir}/`
+
+  return [...trackedPaths].filter((path) => path.startsWith(prefix)).sort()
+}
+
+function syncTrackedDirectory(
+  relativeDir: string,
+  templateDir: string,
+  appDir: string,
+  trackedPaths: Set<string>,
+  counters: SyncCounters,
+  dryRun: boolean,
+  log: (message: string) => void,
+) {
+  for (const relativePath of collectTrackedPathsForDirectory(relativeDir, trackedPaths)) {
+    syncFile(
+      join(templateDir, relativePath),
+      join(appDir, relativePath),
+      templateDir,
+      counters,
+      dryRun,
+      log,
+      relativePath,
+    )
+  }
 }
 
 function syncDirectoryRecursive(
@@ -153,17 +232,19 @@ function syncDirectoryRecursive(
 
   if (stat.isSymbolicLink()) {
     const wantTarget = readlinkSync(sourceRoot, 'utf8')
-    if (existsSync(targetRoot) && symlinkTargetsMatch(sourceRoot, targetRoot)) {
+    const occupied = pathOccupied(targetRoot)
+
+    if (occupied && symlinkTargetsMatch(sourceRoot, targetRoot)) {
       counters.skipped += 1
       return
     }
 
-    const action = existsSync(targetRoot) ? 'UPDATE' : 'ADD'
+    const action = occupied ? 'UPDATE' : 'ADD'
     log(`  ${action}: ${relative(templateDir, sourceRoot)}`)
 
     if (!dryRun) {
       ensureDir(targetRoot)
-      if (existsSync(targetRoot)) {
+      if (occupied) {
         rmSync(targetRoot, { recursive: true, force: true })
       }
       symlinkSync(wantTarget, targetRoot)
@@ -192,6 +273,173 @@ function syncDirectoryRecursive(
   }
 
   syncFile(sourceRoot, targetRoot, templateDir, counters, dryRun, log)
+}
+
+function listPhysicalSkillDirectories(rootDir: string): string[] {
+  if (!existsSync(rootDir)) return []
+
+  try {
+    const stat = lstatSync(rootDir)
+    if (!stat.isDirectory() || stat.isSymbolicLink()) {
+      return []
+    }
+  } catch {
+    return []
+  }
+
+  return readdirSync(rootDir, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory() && !entry.name.startsWith('.'))
+    .map((entry) => entry.name)
+    .sort()
+}
+
+function resolvePhysicalSkillsRoot(rootDir: string): RepoSkillsRoot | null {
+  const candidates: RepoSkillsRoot[] = [
+    {
+      path: join(rootDir, '.github/skills'),
+      relativeDir: '.github/skills',
+    },
+    {
+      path: join(rootDir, '.agents/skills'),
+      relativeDir: '.agents/skills',
+    },
+  ]
+
+  for (const candidate of candidates) {
+    if (!existsSync(candidate.path)) continue
+
+    try {
+      const stat = lstatSync(candidate.path)
+      if (stat.isDirectory() && !stat.isSymbolicLink()) {
+        return candidate
+      }
+    } catch {
+      // Skip paths that vanish mid-run.
+    }
+  }
+
+  return null
+}
+
+function ensurePhysicalDirectory(
+  directory: string,
+  relativePath: string,
+  dryRun: boolean,
+  log: (message: string) => void,
+) {
+  if (existsSync(directory)) {
+    const stat = lstatSync(directory)
+    if (stat.isDirectory() && !stat.isSymbolicLink()) {
+      return
+    }
+
+    log(`  UPDATE: ${relativePath}`)
+    if (!dryRun) {
+      rmSync(directory, { recursive: true, force: true })
+      mkdirSync(directory, { recursive: true })
+    }
+    return
+  }
+
+  log(`  ADD: ${relativePath}`)
+  if (!dryRun) {
+    mkdirSync(directory, { recursive: true })
+  }
+}
+
+function refreshManagedDirectory(
+  directory: string,
+  relativePath: string,
+  dryRun: boolean,
+  log: (message: string) => void,
+) {
+  if (pathOccupied(directory)) {
+    log(`  UPDATE: ${relativePath}`)
+    if (!dryRun) {
+      rmSync(directory, { recursive: true, force: true })
+      mkdirSync(directory, { recursive: true })
+    }
+    return
+  }
+
+  log(`  ADD: ${relativePath}`)
+  if (!dryRun) {
+    mkdirSync(directory, { recursive: true })
+  }
+}
+
+function syncGitHubSkills(
+  templateDir: string,
+  appDir: string,
+  trackedPaths: Set<string> | null,
+  counters: SyncCounters,
+  dryRun: boolean,
+  log: (message: string) => void,
+) {
+  const templateSkillsRoot = resolvePhysicalSkillsRoot(templateDir)
+  if (!templateSkillsRoot) return
+
+  const templateSkillNames = new Set(listPhysicalSkillDirectories(templateSkillsRoot.path))
+  if (templateSkillNames.size === 0) return
+
+  const legacySkillNames = listPhysicalSkillDirectories(join(appDir, '.agents/skills'))
+  const customSkillNames = listPhysicalSkillDirectories(join(appDir, '.github/skills'))
+    .filter((skillName) => !templateSkillNames.has(skillName))
+    .sort()
+  const managedSkillNames = [...templateSkillNames].sort()
+
+  ensurePhysicalDirectory(join(appDir, '.github/skills'), '.github/skills', dryRun, log)
+
+  if (customSkillNames.length > 0) {
+    log(`  Skills: preserving app-local GitHub skills: ${customSkillNames.join(', ')}`)
+  }
+
+  for (const skillName of managedSkillNames) {
+    const targetSkillDir = join(appDir, '.github/skills', skillName)
+    const sourceSkillDir = `${templateSkillsRoot.relativeDir}/${skillName}` as const
+    const sourceSkillPrefix = `${templateSkillsRoot.relativeDir}/`
+    refreshManagedDirectory(targetSkillDir, `.github/skills/${skillName}`, dryRun, log)
+
+    if (trackedPaths) {
+      for (const relativePath of collectTrackedPathsForDirectory(sourceSkillDir, trackedPaths)) {
+        const targetRelativePath = `.github/skills/${relativePath.slice(sourceSkillPrefix.length)}`
+        syncFile(
+          join(templateDir, relativePath),
+          join(appDir, targetRelativePath),
+          templateDir,
+          counters,
+          dryRun,
+          log,
+          targetRelativePath,
+        )
+      }
+      continue
+    }
+
+    syncDirectoryRecursive(
+      join(templateDir, sourceSkillDir),
+      targetSkillDir,
+      templateDir,
+      counters,
+      dryRun,
+      log,
+    )
+  }
+
+  const legacySkillsDir = join(appDir, '.agents/skills')
+  const canDropLegacyMirror =
+    legacySkillNames.length > 0 &&
+    legacySkillNames.every((skillName) => templateSkillNames.has(skillName))
+
+  if (canDropLegacyMirror) {
+    log('  DELETE: .agents/skills (legacy local mirror replaced by .github/skills)')
+    if (!dryRun) {
+      rmSync(legacySkillsDir, { recursive: true, force: true })
+    }
+    counters.removed += 1
+  } else if (legacySkillNames.length > 0) {
+    log('  Skills: preserving legacy .agents/skills because it contains app-local content.')
+  }
 }
 
 function writeTextFile(
@@ -271,12 +519,20 @@ function syncManagedFiles(
   mode: 'full' | 'layer',
   log: (message: string) => void,
 ) {
+  const trackedPaths = getTrackedTemplatePaths(templateDir)
+
   if (mode === 'full') {
     log('Phase 1: Syncing managed template files...')
     for (const file of VERBATIM_SYNC_FILES) {
+      if (trackedPaths && !trackedPaths.has(file)) continue
+      syncFile(join(templateDir, file), join(appDir, file), templateDir, counters, dryRun, log)
+    }
+    for (const file of REFERENCE_BASELINE_FILES) {
+      if (trackedPaths && !trackedPaths.has(file)) continue
       syncFile(join(templateDir, file), join(appDir, file), templateDir, counters, dryRun, log)
     }
     for (const file of BOOTSTRAP_SYNC_FILES) {
+      if (trackedPaths && !trackedPaths.has(file)) continue
       const targetPath = join(appDir, file)
       if (existsSync(targetPath)) continue
       syncFile(join(templateDir, file), targetPath, templateDir, counters, dryRun, log)
@@ -288,6 +544,11 @@ function syncManagedFiles(
   const directories =
     mode === 'full' ? RECURSIVE_SYNC_DIRECTORIES : (['layers/narduk-nuxt-layer'] as const)
   for (const directory of directories) {
+    if (trackedPaths) {
+      syncTrackedDirectory(directory, templateDir, appDir, trackedPaths, counters, dryRun, log)
+      continue
+    }
+
     syncDirectoryRecursive(
       join(templateDir, directory),
       join(appDir, directory),
@@ -296,6 +557,10 @@ function syncManagedFiles(
       dryRun,
       log,
     )
+  }
+
+  if (mode === 'full') {
+    syncGitHubSkills(templateDir, appDir, trackedPaths, counters, dryRun, log)
   }
 
   log(`  ${counters.copied} file(s) updated, ${counters.skipped} already current.`)
@@ -624,21 +889,33 @@ function patchGitignore(appDir: string, dryRun: boolean, log: (message: string) 
     }
   }
 
-  const skillsMarker =
-    '# User-global skills: per-agent symlinks to ~/.skills (pnpm run skills:link / sync-template)'
-  if (!content.includes(skillsMarker)) {
-    for (const legacy of [
-      '.cursor/skills/home',
-      '.codex/skills/home',
-      '.agent/skills/home',
-      '.github/skills/home',
-    ]) {
-      content = content.replace(new RegExp(`^${legacy.replace(/\//g, '\\/')}\\n`, 'gm'), '')
-    }
+  for (const legacy of [
+    '# User-global skills: per-agent symlinks to ~/.skills (pnpm run skills:link / sync-template)',
+    '.cursor/skills',
+    '.codex/skills',
+    '.agent/skills',
+    '.github/skills',
+    '.claude/skills',
+    '.cursor/skills/home',
+    '.codex/skills/home',
+    '.agent/skills/home',
+    '.github/skills/home',
+    '.claude/skills/home',
+  ]) {
+    content = content.replace(
+      new RegExp(`^${legacy.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\n`, 'gm'),
+      '',
+    )
+  }
+
+  const skillsMarker = '# Legacy local skills scratch dir'
+  if (!content.includes('\n.skills\n') && !content.endsWith('\n.skills')) {
     if (!content.endsWith('\n')) {
       content += '\n'
     }
-    content += `\n${skillsMarker}\n.skills\n.cursor/skills\n.codex/skills\n.agent/skills\n.github/skills\n`
+    content += `\n${skillsMarker}\n.skills\n`
+  } else if (!content.includes(skillsMarker)) {
+    content = content.replace(/\n\.skills\n/g, `\n${skillsMarker}\n.skills\n`)
   }
 
   if (content === original) return false
@@ -723,42 +1000,20 @@ function patchNpmrc(appDir: string, dryRun: boolean, log: (message: string) => v
   return true
 }
 
-function ensureSetupComplete(
-  appDir: string,
-  dryRun: boolean,
-  log: (message: string) => void,
-): boolean {
-  const sentinelPath = join(appDir, '.setup-complete')
-  if (existsSync(sentinelPath)) return false
-
-  log('  ADD: .setup-complete')
-  if (!dryRun) {
-    writeFileSync(
-      sentinelPath,
-      `initialized=${new Date().toISOString()}\napp=${relative(dirname(appDir), appDir)}\nsource=sync-template\n`,
-      'utf-8',
-    )
+function warnIfBootstrapArtifactsMissing(appDir: string, log: (message: string) => void): void {
+  const missing: string[] = []
+  if (!existsSync(join(appDir, '.setup-complete'))) {
+    missing.push('.setup-complete')
   }
-  return true
-}
-
-function ensureDopplerYaml(
-  appDir: string,
-  dryRun: boolean,
-  log: (message: string) => void,
-): boolean {
-  const dopplerPath = join(appDir, 'doppler.yaml')
-  const repoName = appDir.split('/').pop() || 'unknown'
-  const expectedContent = `setup:\n  project: ${repoName}\n  config: prd\n`
-  const currentContent = existsSync(dopplerPath) ? readFileSync(dopplerPath, 'utf-8') : null
-
-  if (currentContent === expectedContent) return false
-
-  log(`  ${currentContent === null ? 'ADD' : 'UPDATE'}: doppler.yaml`)
-  if (!dryRun) {
-    writeFileSync(dopplerPath, expectedContent, 'utf-8')
+  if (!existsSync(join(appDir, 'doppler.yaml'))) {
+    missing.push('doppler.yaml')
   }
-  return true
+  if (missing.length === 0) return
+
+  log(`  WARN: bootstrap-managed files missing (${missing.join(', ')})`)
+  log(
+    '        Sync will not recreate provisioning artifacts; repair them via provisioning or an explicit ops flow.',
+  )
 }
 
 function rewriteLayerRepository(
@@ -898,15 +1153,12 @@ export async function runAppSync(options: RunAppSyncOptions) {
   if (mode === 'full') {
     patchGitignore(options.appDir, dryRun, log)
     patchNpmrc(options.appDir, dryRun, log)
-    ensureSetupComplete(options.appDir, dryRun, log)
-    ensureDopplerYaml(options.appDir, dryRun, log)
+    warnIfBootstrapArtifactsMissing(options.appDir, log)
     ensureGitHooksPath(options.appDir, dryRun, log)
   }
 
   log('')
-  log(
-    '  Skills: symlinking .cursor/.codex/.agent/.github skills/ → ~/.skills (after gitignore/stale cleanup)...',
-  )
+  log('  Skills: repairing local agent links → committed repo skills (.github/skills preferred)...')
   ensureSkillsLinks(options.appDir, { dryRun, log })
 
   // Record template HEAD for drift checks and fleet audit — must run for layer-only

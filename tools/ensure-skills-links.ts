@@ -1,13 +1,16 @@
 #!/usr/bin/env -S pnpm exec tsx
 /**
- * Wires each agent’s `skills` directory to the global library at ~/.skills:
- * - `.cursor/skills`, `.codex/skills`, `.agent/skills`, `.github/skills` → ~/.skills
- * - No repo-root `.skills` entry (removed if present as symlink/file).
+ * Ensures each local agent-facing `skills` entry in the repo points at the
+ * committed skill directory:
+ * - Prefer `.github/skills` when it exists as physical repo content so GitHub
+ *   coding agents can read the same skills from the repository.
+ * - Fall back to `.agents/skills` for older repos that still vendor skills
+ *   there.
+ * - `.cursor/skills`, `.codex/skills`, `.agent/skills`, `.claude/skills`
+ *   become relative symlinks to the chosen committed directory.
  *
- * Symlinks are gitignored; run `pnpm run skills:link` (or template sync) after clone.
- *
- * Invoked by `pnpm run skills:link`, at the start of `sync-template` / `update-layer`
- * (before the app dirty check), and from `sync-fleet` when auto-commit skips a dirty app.
+ * Invoked by `pnpm run skills:link`, at the start of `sync-template` /
+ * `update-layer`, and from `sync-fleet` when auto-commit skips a dirty app.
  */
 import {
   existsSync,
@@ -15,10 +18,9 @@ import {
   mkdirSync,
   readdirSync,
   readlinkSync,
-  realpathSync,
   rmSync,
-  rmdirSync,
   symlinkSync,
+  unlinkSync,
 } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -28,15 +30,26 @@ const selfPath = fileURLToPath(import.meta.url)
 const entryPath = process.argv[1] ? resolve(process.argv[1]) : ''
 const isMainModule = Boolean(entryPath && entryPath === selfPath)
 
-const AGENT_SKILL_ROOTS = ['.cursor', '.codex', '.agent', '.github'] as const
+const LOCAL_AGENT_SKILL_ROOTS = ['.cursor', '.codex', '.agent', '.claude']
+const TRANSIENT_SKILLS_DIRECTORIES = new Set([
+  '.git',
+  '__pycache__',
+  '.pytest_cache',
+  'node_modules',
+])
+const TRANSIENT_SKILLS_FILES = new Set(['.DS_Store'])
 
 export interface EnsureSkillsLinksOptions {
   dryRun?: boolean
   log?: (message: string) => void
 }
 
-function ensureParentDir(filePath: string, dryRun: boolean, log: (message: string) => void) {
-  const dir = dirname(filePath)
+interface RepoSkillsTarget {
+  path: string
+  relativeTarget: string
+}
+
+function ensureParentDir(dir: string, dryRun: boolean, log: (message: string) => void) {
   if (existsSync(dir)) return
   log(`  ADD: mkdir ${dir}`)
   if (!dryRun) {
@@ -44,7 +57,7 @@ function ensureParentDir(filePath: string, dryRun: boolean, log: (message: strin
   }
 }
 
-/** True if anything exists at path (including a broken symlink — existsSync can lie). */
+/** True if anything exists at path (including a broken symlink). */
 function pathOccupied(linkPath: string): boolean {
   try {
     lstatSync(linkPath)
@@ -54,178 +67,139 @@ function pathOccupied(linkPath: string): boolean {
   }
 }
 
-function ensureSymlink(
-  targetAbsolute: string,
-  linkPath: string,
-  label: string,
+function removeExistingPath(path: string): void {
+  const stat = lstatSync(path)
+
+  if (stat.isSymbolicLink()) {
+    unlinkSync(path)
+    return
+  }
+
+  rmSync(path, { recursive: true, force: true })
+}
+
+function pruneSkillsArtifacts(
+  rootDir: string,
   dryRun: boolean,
   log: (message: string) => void,
-): boolean {
-  const want = resolve(targetAbsolute)
-  ensureParentDir(linkPath, dryRun, log)
+): void {
+  if (!existsSync(rootDir) || !lstatSync(rootDir).isDirectory()) return
 
-  if (pathOccupied(linkPath)) {
+  const visit = (dir: string) => {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      const fullPath = join(dir, entry.name)
+
+      if (entry.isDirectory()) {
+        if (TRANSIENT_SKILLS_DIRECTORIES.has(entry.name)) {
+          log(`  REMOVE transient skills dir: ${fullPath}`)
+          if (!dryRun) rmSync(fullPath, { recursive: true, force: true })
+          continue
+        }
+
+        visit(fullPath)
+        continue
+      }
+
+      if (TRANSIENT_SKILLS_FILES.has(entry.name) || entry.name.endsWith('.pyc')) {
+        log(`  REMOVE transient skills file: ${fullPath}`)
+        if (!dryRun) rmSync(fullPath, { force: true })
+      }
+    }
+  }
+
+  visit(rootDir)
+}
+
+function resolveRepoSkillsTarget(appDir: string): RepoSkillsTarget | null {
+  const candidates: RepoSkillsTarget[] = [
+    {
+      path: join(appDir, '.github', 'skills'),
+      relativeTarget: '../.github/skills',
+    },
+    {
+      path: join(appDir, '.agents', 'skills'),
+      relativeTarget: '../.agents/skills',
+    },
+  ]
+
+  for (const candidate of candidates) {
+    if (!existsSync(candidate.path)) continue
+
     try {
-      const st = lstatSync(linkPath)
-      if (st.isSymbolicLink()) {
-        const raw = readlinkSync(linkPath, 'utf8')
-        const cur = resolve(dirname(linkPath), raw)
-        let curCanon = cur
-        let wantCanon = want
-        try {
-          curCanon = realpathSync(cur)
-        } catch {
-          // broken or unreadable target
-        }
-        try {
-          wantCanon = realpathSync(want)
-        } catch {
-          // fall back to resolved string
-        }
-        if (curCanon === wantCanon) {
-          return false
-        }
+      const stat = lstatSync(candidate.path)
+      if (stat.isDirectory() && !stat.isSymbolicLink()) {
+        return candidate
       }
     } catch {
-      // fall through to replace
-    }
-    log(`  REPLACE symlink: ${label}`)
-  } else {
-    log(`  ADD symlink: ${label}`)
-  }
-
-  if (!dryRun) {
-    try {
-      rmSync(linkPath, { recursive: true, force: true })
-    } catch (err: unknown) {
-      const code =
-        err && typeof err === 'object' && 'code' in err ? (err as NodeJS.ErrnoException).code : ''
-      if (code !== 'ENOENT') {
-        throw err
-      }
-    }
-    symlinkSync(want, linkPath)
-  }
-  return true
-}
-
-function canonicalGlobalSkillsPath(globalSkillsDir: string): string {
-  try {
-    return realpathSync(globalSkillsDir)
-  } catch {
-    return resolve(globalSkillsDir)
-  }
-}
-
-/** Drop legacy repo-root `.skills` (symlink or file). Leave non-empty directories untouched. */
-function removeRepoRootDotSkills(
-  appDir: string,
-  dryRun: boolean,
-  log: (message: string) => void,
-): void {
-  const p = join(appDir, '.skills')
-  if (!existsSync(p)) return
-  let st: ReturnType<typeof lstatSync>
-  try {
-    st = lstatSync(p)
-  } catch {
-    return
-  }
-
-  if (st.isSymbolicLink() || st.isFile()) {
-    log(`  REMOVE: ${p} (use per-agent skills/ symlinks only)`)
-    if (!dryRun) {
-      rmSync(p, { recursive: true, force: true })
-    }
-    return
-  }
-
-  if (st.isDirectory()) {
-    const entries = readdirSync(p)
-    if (entries.length === 0) {
-      log(`  REMOVE: empty directory ${p}`)
-      if (!dryRun) {
-        rmdirSync(p)
-      }
-    } else {
-      log(
-        `  WARN: ${p} is a non-empty directory — not removed; move contents to ~/.skills if needed`,
-      )
+      // Skip paths that vanish mid-run.
     }
   }
-}
 
-/**
- * Remove `~/.skills/home` if present (leftover from older `…/skills/home` layouts or mistaken paths).
- */
-function removeStrayHomeInGlobalLibrary(
-  globalSkillsDir: string,
-  dryRun: boolean,
-  log: (message: string) => void,
-): void {
-  const stray = join(globalSkillsDir, 'home')
-  if (!existsSync(stray)) return
-  let st: ReturnType<typeof lstatSync>
-  try {
-    st = lstatSync(stray)
-  } catch {
-    return
-  }
-
-  if (st.isSymbolicLink()) {
-    log(`  REMOVE stray: ${stray} (obsolete layout; agents use <tool>/skills → ~/.skills)`)
-    if (!dryRun) {
-      rmSync(stray, { recursive: true, force: true })
-    }
-    return
-  }
-
-  if (st.isDirectory()) {
-    const entries = readdirSync(stray)
-    if (entries.length === 0) {
-      log(`  REMOVE stray: ${stray} (empty directory)`)
-      if (!dryRun) {
-        rmdirSync(stray)
-      }
-      return
-    }
-    log(
-      `  WARN: ${stray} is a non-empty directory — not removed; rename or delete manually if unintended`,
-    )
-  }
+  return null
 }
 
 export function ensureSkillsLinks(appDir: string, options: EnsureSkillsLinksOptions = {}): void {
   const dryRun = options.dryRun ?? false
   const log = options.log ?? console.log
-  const home = process.env.HOME || ''
-
-  if (!home) {
-    log('  SKIP: skills links (HOME is not set)')
+  const repoSkillsTarget = resolveRepoSkillsTarget(appDir)
+  if (!repoSkillsTarget) {
+    log('  SKIP: skills links (no physical .github/skills or .agents/skills directory found)')
     return
   }
 
-  const globalSkillsDir = join(home, '.skills')
-  if (!existsSync(globalSkillsDir)) {
-    log(`  ADD: mkdir ${globalSkillsDir}`)
-    if (!dryRun) {
-      mkdirSync(globalSkillsDir, { recursive: true })
+  pruneSkillsArtifacts(repoSkillsTarget.path, dryRun, log)
+
+  for (const root of LOCAL_AGENT_SKILL_ROOTS) {
+    const rootDir = join(appDir, root)
+    const linkPath = join(rootDir, 'skills')
+
+    ensureParentDir(rootDir, dryRun, log)
+
+    let needsReplace = false
+    if (pathOccupied(linkPath)) {
+      needsReplace = true
+      try {
+        const st = lstatSync(linkPath)
+        if (st.isSymbolicLink()) {
+          const target = readlinkSync(linkPath)
+          if (target === repoSkillsTarget.relativeTarget) {
+            needsReplace = false
+          }
+        }
+      } catch {}
+    } else {
+      needsReplace = true
+    }
+
+    if (needsReplace) {
+      if (pathOccupied(linkPath)) {
+        log(`  REMOVE old symlink/dir: ${linkPath}`)
+        if (!dryRun) {
+          removeExistingPath(linkPath)
+        }
+      }
+
+      log(`  ADD symlink: ${root}/skills -> ${repoSkillsTarget.relativeTarget}`)
+      if (!dryRun) {
+        if (pathOccupied(linkPath)) {
+          throw new Error(`Failed to clear existing path before linking: ${linkPath}`)
+        }
+        const originalDir = process.cwd()
+        process.chdir(rootDir)
+        try {
+          symlinkSync(repoSkillsTarget.relativeTarget, 'skills')
+        } finally {
+          process.chdir(originalDir)
+        }
+      }
     }
   }
 
-  removeStrayHomeInGlobalLibrary(globalSkillsDir, dryRun, log)
-
-  const bridgeTarget = canonicalGlobalSkillsPath(globalSkillsDir)
-
-  for (const root of AGENT_SKILL_ROOTS) {
-    const linkPath = join(appDir, root, 'skills')
-    const label = `${root}/skills -> ~/.skills`
-    ensureSymlink(bridgeTarget, linkPath, label, dryRun, log)
+  const legacyRootSkills = join(appDir, '.skills')
+  if (pathOccupied(legacyRootSkills)) {
+    log('  REMOVE: legacy repo-root .skills')
+    if (!dryRun) removeExistingPath(legacyRootSkills)
   }
-
-  // After agent paths point at ~/.skills, drop legacy repo-root `.skills` (including
-  // targets of old `../.skills` indirection) so realpath checks stay valid on the next run.
-  removeRepoRootDotSkills(appDir, dryRun, log)
 }
 
 if (isMainModule) {

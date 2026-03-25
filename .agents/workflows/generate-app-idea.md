@@ -93,8 +93,8 @@ the control plane:
    ```
 
    This creates the GitHub repo, registers it in the fleet, and triggers the
-   `provision-app.yml` GitHub Action which runs init.ts, analytics setup, and
-   first deploy automatically.
+   control plane’s `provision-app.yml` workflow (`tools/provision/*`, hydrate,
+   analytics, first deploy).
 
 2. Poll for completion:
 
