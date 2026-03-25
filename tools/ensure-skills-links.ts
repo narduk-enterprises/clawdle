@@ -9,8 +9,8 @@
  * - `.cursor/skills`, `.codex/skills`, `.agent/skills`, `.claude/skills`
  *   become relative symlinks to the chosen committed directory.
  *
- * Invoked by `pnpm run skills:link`, at the start of `sync-template` /
- * `update-layer`, and from `sync-fleet` when auto-commit skips a dirty app.
+ * Invoked by `pnpm run skills:link` or `pnpm run setup` when local agent entry
+ * points need to be repaired.
  */
 import {
   existsSync,

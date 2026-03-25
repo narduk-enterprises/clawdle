@@ -13,7 +13,6 @@ import {
   writeFileSync,
 } from 'node:fs'
 import { basename, dirname, join, relative } from 'node:path'
-import { ensureSkillsLinks } from './ensure-skills-links'
 import { runCommand } from './command'
 import {
   BOOTSTRAP_SYNC_FILES,
@@ -1156,10 +1155,6 @@ export async function runAppSync(options: RunAppSyncOptions) {
     warnIfBootstrapArtifactsMissing(options.appDir, log)
     ensureGitHooksPath(options.appDir, dryRun, log)
   }
-
-  log('')
-  log('  Skills: repairing local agent links → committed repo skills (.github/skills preferred)...')
-  ensureSkillsLinks(options.appDir, { dryRun, log })
 
   // Record template HEAD for drift checks and fleet audit — must run for layer-only
   // sync too, otherwise check-drift-ci keeps comparing against a stale SHA.
