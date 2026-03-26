@@ -46,11 +46,6 @@ interface SyncCounters {
   removed: number
 }
 
-interface RepoSkillsRoot {
-  path: string
-  relativeDir: '.github/skills' | '.agents/skills'
-}
-
 function createCounters(): SyncCounters {
   return { copied: 0, skipped: 0, removed: 0 }
 }
@@ -274,173 +269,6 @@ function syncDirectoryRecursive(
   syncFile(sourceRoot, targetRoot, templateDir, counters, dryRun, log)
 }
 
-function listPhysicalSkillDirectories(rootDir: string): string[] {
-  if (!existsSync(rootDir)) return []
-
-  try {
-    const stat = lstatSync(rootDir)
-    if (!stat.isDirectory() || stat.isSymbolicLink()) {
-      return []
-    }
-  } catch {
-    return []
-  }
-
-  return readdirSync(rootDir, { withFileTypes: true })
-    .filter((entry) => entry.isDirectory() && !entry.name.startsWith('.'))
-    .map((entry) => entry.name)
-    .sort()
-}
-
-function resolvePhysicalSkillsRoot(rootDir: string): RepoSkillsRoot | null {
-  const candidates: RepoSkillsRoot[] = [
-    {
-      path: join(rootDir, '.github/skills'),
-      relativeDir: '.github/skills',
-    },
-    {
-      path: join(rootDir, '.agents/skills'),
-      relativeDir: '.agents/skills',
-    },
-  ]
-
-  for (const candidate of candidates) {
-    if (!existsSync(candidate.path)) continue
-
-    try {
-      const stat = lstatSync(candidate.path)
-      if (stat.isDirectory() && !stat.isSymbolicLink()) {
-        return candidate
-      }
-    } catch {
-      // Skip paths that vanish mid-run.
-    }
-  }
-
-  return null
-}
-
-function ensurePhysicalDirectory(
-  directory: string,
-  relativePath: string,
-  dryRun: boolean,
-  log: (message: string) => void,
-) {
-  if (existsSync(directory)) {
-    const stat = lstatSync(directory)
-    if (stat.isDirectory() && !stat.isSymbolicLink()) {
-      return
-    }
-
-    log(`  UPDATE: ${relativePath}`)
-    if (!dryRun) {
-      rmSync(directory, { recursive: true, force: true })
-      mkdirSync(directory, { recursive: true })
-    }
-    return
-  }
-
-  log(`  ADD: ${relativePath}`)
-  if (!dryRun) {
-    mkdirSync(directory, { recursive: true })
-  }
-}
-
-function refreshManagedDirectory(
-  directory: string,
-  relativePath: string,
-  dryRun: boolean,
-  log: (message: string) => void,
-) {
-  if (pathOccupied(directory)) {
-    log(`  UPDATE: ${relativePath}`)
-    if (!dryRun) {
-      rmSync(directory, { recursive: true, force: true })
-      mkdirSync(directory, { recursive: true })
-    }
-    return
-  }
-
-  log(`  ADD: ${relativePath}`)
-  if (!dryRun) {
-    mkdirSync(directory, { recursive: true })
-  }
-}
-
-function syncGitHubSkills(
-  templateDir: string,
-  appDir: string,
-  trackedPaths: Set<string> | null,
-  counters: SyncCounters,
-  dryRun: boolean,
-  log: (message: string) => void,
-) {
-  const templateSkillsRoot = resolvePhysicalSkillsRoot(templateDir)
-  if (!templateSkillsRoot) return
-
-  const templateSkillNames = new Set(listPhysicalSkillDirectories(templateSkillsRoot.path))
-  if (templateSkillNames.size === 0) return
-
-  const legacySkillNames = listPhysicalSkillDirectories(join(appDir, '.agents/skills'))
-  const customSkillNames = listPhysicalSkillDirectories(join(appDir, '.github/skills'))
-    .filter((skillName) => !templateSkillNames.has(skillName))
-    .sort()
-  const managedSkillNames = [...templateSkillNames].sort()
-
-  ensurePhysicalDirectory(join(appDir, '.github/skills'), '.github/skills', dryRun, log)
-
-  if (customSkillNames.length > 0) {
-    log(`  Skills: preserving app-local GitHub skills: ${customSkillNames.join(', ')}`)
-  }
-
-  for (const skillName of managedSkillNames) {
-    const targetSkillDir = join(appDir, '.github/skills', skillName)
-    const sourceSkillDir = `${templateSkillsRoot.relativeDir}/${skillName}` as const
-    const sourceSkillPrefix = `${templateSkillsRoot.relativeDir}/`
-    refreshManagedDirectory(targetSkillDir, `.github/skills/${skillName}`, dryRun, log)
-
-    if (trackedPaths) {
-      for (const relativePath of collectTrackedPathsForDirectory(sourceSkillDir, trackedPaths)) {
-        const targetRelativePath = `.github/skills/${relativePath.slice(sourceSkillPrefix.length)}`
-        syncFile(
-          join(templateDir, relativePath),
-          join(appDir, targetRelativePath),
-          templateDir,
-          counters,
-          dryRun,
-          log,
-          targetRelativePath,
-        )
-      }
-      continue
-    }
-
-    syncDirectoryRecursive(
-      join(templateDir, sourceSkillDir),
-      targetSkillDir,
-      templateDir,
-      counters,
-      dryRun,
-      log,
-    )
-  }
-
-  const legacySkillsDir = join(appDir, '.agents/skills')
-  const canDropLegacyMirror =
-    legacySkillNames.length > 0 &&
-    legacySkillNames.every((skillName) => templateSkillNames.has(skillName))
-
-  if (canDropLegacyMirror) {
-    log('  DELETE: .agents/skills (legacy local mirror replaced by .github/skills)')
-    if (!dryRun) {
-      rmSync(legacySkillsDir, { recursive: true, force: true })
-    }
-    counters.removed += 1
-  } else if (legacySkillNames.length > 0) {
-    log('  Skills: preserving legacy .agents/skills because it contains app-local content.')
-  }
-}
-
 function writeTextFile(
   targetPath: string,
   content: string,
@@ -556,10 +384,6 @@ function syncManagedFiles(
       dryRun,
       log,
     )
-  }
-
-  if (mode === 'full') {
-    syncGitHubSkills(templateDir, appDir, trackedPaths, counters, dryRun, log)
   }
 
   log(`  ${counters.copied} file(s) updated, ${counters.skipped} already current.`)
@@ -741,6 +565,48 @@ function patchRootPackage(
   return touched
 }
 
+/**
+ * `apps/web/wrangler.json` is not copied verbatim (would wipe D1 ids, routes,
+ * domains). When the layer expects Workers KV, merge a missing `KV` binding
+ * from the template so `nitro-cloudflare-dev` matches new layer routes.
+ */
+function mergeWebWranglerKvBinding(
+  appDir: string,
+  templateDir: string,
+  dryRun: boolean,
+  mode: 'full' | 'layer',
+  log: (message: string) => void,
+): void {
+  if (mode !== 'full') return
+
+  const templatePath = join(templateDir, 'apps/web/wrangler.json')
+  const appPath = join(appDir, 'apps/web/wrangler.json')
+  if (!existsSync(templatePath) || !existsSync(appPath)) return
+
+  const templateWrangler = JSON.parse(readFileSync(templatePath, 'utf-8')) as {
+    kv_namespaces?: Array<{ binding?: string; id?: string; preview_id?: string }>
+  }
+  const templateKv = templateWrangler.kv_namespaces?.find((n) => n?.binding === 'KV')
+  if (!templateKv) return
+
+  const changed = patchJsonFile<Record<string, unknown>>(
+    appPath,
+    (w) => {
+      const list = (w.kv_namespaces as Array<{ binding?: string }> | undefined) ?? []
+      if (list.some((n) => n?.binding === 'KV')) {
+        return false
+      }
+      w.kv_namespaces = [...list, JSON.parse(JSON.stringify(templateKv)) as Record<string, unknown>]
+      return true
+    },
+    dryRun,
+  )
+
+  if (changed) {
+    log('  UPDATE: apps/web/wrangler.json (merged KV binding from template)')
+  }
+}
+
 function patchWebPackage(
   appDir: string,
   templateDir: string,
@@ -788,6 +654,7 @@ function patchWebPackage(
           const layerDrizzleDir =
             'node_modules/@narduk-enterprises/narduk-nuxt-template-layer/drizzle'
           const expectedMigrate = `bash ../../tools/db-migrate.sh ${databaseName} --local --dir ${layerDrizzleDir} --dir drizzle`
+          const expectedSeed = `wrangler d1 execute ${databaseName} --local --file=node_modules/@narduk-enterprises/narduk-nuxt-template-layer/drizzle/seed.sql`
           const expectedReset = `bash ../../tools/db-migrate.sh ${databaseName} --local --dir ${layerDrizzleDir} --dir drizzle --reset && pnpm run db:seed`
           const expectedReady = 'pnpm run db:migrate && pnpm run db:seed'
           const expectedVerify =
@@ -797,6 +664,11 @@ function patchWebPackage(
 
           if (pkg.scripts['db:migrate'] !== expectedMigrate) {
             pkg.scripts['db:migrate'] = expectedMigrate
+            changed = true
+          }
+
+          if (pkg.scripts['db:seed'] !== expectedSeed) {
+            pkg.scripts['db:seed'] = expectedSeed
             changed = true
           }
 
@@ -830,8 +702,16 @@ function patchWebPackage(
       if (mode === 'full') {
         pkg.dependencies = pkg.dependencies || {}
         pkg.devDependencies = pkg.devDependencies || {}
+        const eslintPkgPath = join(templateDir, 'packages/eslint-config/package.json')
         const templateEslintVersion =
-          templateWebPackage.dependencies?.['@narduk-enterprises/eslint-config']
+          templateWebPackage.dependencies?.['@narduk-enterprises/eslint-config'] ??
+          (existsSync(eslintPkgPath)
+            ? (
+                JSON.parse(readFileSync(eslintPkgPath, 'utf-8')) as {
+                  dependencies?: Record<string, string>
+                }
+              ).dependencies?.['@narduk-enterprises/eslint-config']
+            : undefined)
         const templateDevEslintVersion = templateWebPackage.devDependencies?.eslint
         if (pkg.dependencies['@narduk/eslint-config']) {
           delete pkg.dependencies['@narduk/eslint-config']
@@ -886,35 +766,6 @@ function patchGitignore(appDir: string, dryRun: boolean, log: (message: string) 
       }
       content += `${entry}\n`
     }
-  }
-
-  for (const legacy of [
-    '# User-global skills: per-agent symlinks to ~/.skills (pnpm run skills:link / sync-template)',
-    '.cursor/skills',
-    '.codex/skills',
-    '.agent/skills',
-    '.github/skills',
-    '.claude/skills',
-    '.cursor/skills/home',
-    '.codex/skills/home',
-    '.agent/skills/home',
-    '.github/skills/home',
-    '.claude/skills/home',
-  ]) {
-    content = content.replace(
-      new RegExp(`^${legacy.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\n`, 'gm'),
-      '',
-    )
-  }
-
-  const skillsMarker = '# Legacy local skills scratch dir'
-  if (!content.includes('\n.skills\n') && !content.endsWith('\n.skills')) {
-    if (!content.endsWith('\n')) {
-      content += '\n'
-    }
-    content += `\n${skillsMarker}\n.skills\n`
-  } else if (!content.includes(skillsMarker)) {
-    content = content.replace(/\n\.skills\n/g, `\n${skillsMarker}\n.skills\n`)
   }
 
   if (content === original) return false
@@ -1149,6 +1000,7 @@ export async function runAppSync(options: RunAppSyncOptions) {
 
   const packageTouched = patchRootPackage(options.appDir, options.templateDir, dryRun, mode, log)
   patchWebPackage(options.appDir, options.templateDir, dryRun, mode, log)
+  mergeWebWranglerKvBinding(options.appDir, options.templateDir, dryRun, mode, log)
   if (mode === 'full') {
     patchGitignore(options.appDir, dryRun, log)
     patchNpmrc(options.appDir, dryRun, log)

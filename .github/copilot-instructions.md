@@ -4,17 +4,9 @@ Read `AGENTS.md` at the project root for full project rules and conventions.
 
 ## Repo skills
 
-Committed repo skills live in `.github/skills/` when that directory exists.
-Older or authoring-oriented checkouts may still keep the editable source under
-`.agents/skills/`, and local agent links fall back there only when
-`.github/skills/` is absent. The entry points `.agent/skills`, `.cursor/skills`,
-`.codex/skills`, and `.claude/skills` are repaired to the committed repo skill
-surface so GitHub Copilot and local agents read the same vendored payload from
-the checkout.
-
-`pnpm run skills:link` only repairs those repo-local symlinks if they drift. It
-does not pull from `~/.skills`, and it does not overwrite committed
-`.github/skills` content.
+If this repo ships committed skills for GitHub-facing agents, they live in
+`.github/skills/`. The template does not mirror, symlink, or repair local agent
+skill directories. Manage any local-only skills separately from this checkout.
 
 ### Installing new skills
 
@@ -26,8 +18,7 @@ npx skills add https://github.com/<owner>/<repo> --skill <name>
 /skill-create
 ```
 
-See `docs/agents/skills.md` for full architecture, fleet distribution, and the
-skills inventory.
+See `docs/agents/skills.md` for the manual-management rules.
 
 ## Architecture & Monorepo
 
@@ -71,10 +62,9 @@ skills inventory.
 - **CRITICAL**: If starting a new derived project, begin from the generated
   starter surface, not this authoring workspace. Use the control plane, a
   published starter repo, or `pnpm run export:starter -- ../my-app --force`,
-  then run `pnpm setup` inside that generated app. Verify `git remote -v` does
-  NOT point to `narduk-enterprises/narduk-nuxt-template`. If you are
-  intentionally working on the template repository itself, that remote is
-  expected.
+  then work from that generated app checkout. Verify `git remote -v` does NOT
+  point to `narduk-enterprises/narduk-nuxt-template`. If you are intentionally
+  working on the template repository itself, that remote is expected.
 - **Secrets**: Use Doppler. Secrets are consumed via `process.env.SECRET_NAME`
   in `nuxt.config.ts`.
 - Run `/check-*` and `/audit-*` AI workflows (in `.agents/workflows/`) for

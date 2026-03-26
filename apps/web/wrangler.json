@@ -6,20 +6,28 @@
     "directory": ".output/public"
   },
   "compatibility_date": "2026-03-11",
-  "compatibility_flags": [
-    "nodejs_compat"
-  ],
+  "compatibility_flags": ["nodejs_compat"],
   "observability": {
     "enabled": true
   },
   "routes": [
-    { "pattern": "clawdle.nard.uk", "custom_domain": true }
+    {
+      "pattern": "clawdle.nard.uk",
+      "custom_domain": true
+    }
   ],
   "d1_databases": [
     {
       "binding": "DB",
       "database_name": "clawdle-db",
       "database_id": "a501785e-af2c-4bda-9845-3af8b365b7fe"
+    }
+  ],
+  "kv_namespaces": [
+    {
+      "binding": "KV",
+      "id": "00000000000000000000000000000000",
+      "preview_id": "00000000000000000000000000000000"
     }
   ]
 }

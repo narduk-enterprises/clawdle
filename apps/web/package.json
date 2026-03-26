@@ -7,7 +7,7 @@
     "build": "nuxt build",
     "dev": "(doppler run -- nuxt dev || nuxt dev)",
     "db:migrate": "bash ../../tools/db-migrate.sh clawdle-db --local --dir node_modules/@narduk-enterprises/narduk-nuxt-template-layer/drizzle --dir drizzle",
-    "db:seed": "wrangler d1 execute clawdle-db --local --yes --file=drizzle/0002_seed_words.sql",
+    "db:seed": "wrangler d1 execute clawdle-db --local --file=node_modules/@narduk-enterprises/narduk-nuxt-template-layer/drizzle/seed.sql",
     "db:studio": "drizzle-kit studio",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
