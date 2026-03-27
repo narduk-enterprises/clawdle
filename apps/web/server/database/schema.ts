@@ -8,6 +8,7 @@
 import { sqliteTable, text, integer, uniqueIndex, index } from 'drizzle-orm/sqlite-core'
 
 export * from '#layer/server/database/schema'
+export * from '#server/database/auth-bridge-schema'
 
 // ─── Words ──────────────────────────────────────────────────
 export const words = sqliteTable('words', {
