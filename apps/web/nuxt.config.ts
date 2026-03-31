@@ -4,14 +4,29 @@ import { resolve, dirname } from 'node:path'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
+const appBackendPreset =
+  process.env.APP_BACKEND_PRESET === 'managed-supabase' ? 'managed-supabase' : 'default'
+const supabaseUrl = process.env.AUTH_AUTHORITY_URL || process.env.SUPABASE_URL || ''
+const supabasePublishableKey =
+  process.env.SUPABASE_PUBLISHABLE_KEY ||
+  process.env.SUPABASE_ANON_KEY ||
+  process.env.SUPABASE_AUTH_ANON_KEY ||
+  ''
+const supabaseServiceRoleKey =
+  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_AUTH_SERVICE_ROLE_KEY || ''
 const configuredAuthBackend = process.env.AUTH_BACKEND
 const authBackend =
   configuredAuthBackend === 'supabase' || configuredAuthBackend === 'local'
     ? configuredAuthBackend
-    : process.env.AUTH_AUTHORITY_URL && process.env.SUPABASE_AUTH_ANON_KEY
+    : supabaseUrl && supabasePublishableKey
       ? 'supabase'
       : 'local'
-const authAuthorityUrl = process.env.AUTH_AUTHORITY_URL || ''
+const authAuthorityUrl = supabaseUrl
+
+const appOrmTablesEntry =
+  process.env.NUXT_DATABASE_BACKEND === 'postgres'
+    ? './server/database/pg-app-schema.ts'
+    : './server/database/app-schema.ts'
 
 function parseAuthProviders(value: string | undefined) {
   return (value || 'apple,email')
@@ -55,12 +70,6 @@ export default defineNuxtConfig({
     supabaseUrl,
     supabasePublishableKey,
     supabaseServiceRoleKey,
-    authBackend,
-    authAuthorityUrl,
-    authAnonKey: process.env.SUPABASE_AUTH_ANON_KEY || '',
-    authServiceRoleKey: process.env.SUPABASE_AUTH_SERVICE_ROLE_KEY || '',
-    authStorageKey: process.env.AUTH_STORAGE_KEY || 'web-auth',
-    turnstileSecretKey: process.env.TURNSTILE_SECRET_KEY || '',
     session: {
       password:
         process.env.NUXT_SESSION_PASSWORD ||
@@ -72,6 +81,7 @@ export default defineNuxtConfig({
     gaPropertyId: process.env.GA_PROPERTY_ID || '',
     posthogProjectId: process.env.POSTHOG_PROJECT_ID || '',
     public: {
+      appBackendPreset,
       authBackend,
       authAuthorityUrl,
       authLoginPath: '/login',
@@ -85,6 +95,8 @@ export default defineNuxtConfig({
       authPublicSignup: process.env.AUTH_PUBLIC_SIGNUP !== 'false',
       authRequireMfa: process.env.AUTH_REQUIRE_MFA === 'true',
       authTurnstileSiteKey: process.env.TURNSTILE_SITE_KEY || '',
+      supabaseUrl,
+      supabasePublishableKey,
       appUrl: process.env.SITE_URL || 'https://clawdle.nard.uk',
       appName: process.env.APP_NAME || 'Clawdle',
       // Analytics
