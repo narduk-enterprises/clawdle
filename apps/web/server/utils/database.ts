@@ -1,7 +1,8 @@
-import * as schema from '#server/database/schema'
+import * as d1Schema from '#server/database/schema'
+import * as pgSchema from '#server/database/pg-schema'
+import { createAppDatabase } from '#layer/server/utils/database'
 
-/**
- * App-level Drizzle instance with full app schema.
- * Uses the layer's createAppDatabase factory for consistent D1 binding.
- */
-export const useAppDatabase = createAppDatabase(schema)
+export const useAppDatabase = createAppDatabase({
+  d1: d1Schema,
+  pg: pgSchema,
+})

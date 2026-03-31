@@ -27,6 +27,10 @@ export default defineNuxtConfig({
   // Extend the published Narduk Nuxt Layer
   extends: ['@narduk-enterprises/narduk-nuxt-template-layer'],
 
+  alias: {
+    '#server/app-orm-tables': fileURLToPath(new URL(appOrmTablesEntry, import.meta.url)),
+  },
+
   // nitro-cloudflare-dev proxies D1 bindings to the local dev server
   modules: ['nitro-cloudflare-dev'],
 
@@ -41,6 +45,16 @@ export default defineNuxtConfig({
   },
 
   runtimeConfig: {
+    appBackendPreset,
+    authBackend,
+    authAuthorityUrl,
+    authAnonKey: supabasePublishableKey,
+    authServiceRoleKey: supabaseServiceRoleKey,
+    authStorageKey: process.env.AUTH_STORAGE_KEY || 'web-auth',
+    turnstileSecretKey: process.env.TURNSTILE_SECRET_KEY || '',
+    supabaseUrl,
+    supabasePublishableKey,
+    supabaseServiceRoleKey,
     authBackend,
     authAuthorityUrl,
     authAnonKey: process.env.SUPABASE_AUTH_ANON_KEY || '',

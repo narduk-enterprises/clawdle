@@ -37,7 +37,8 @@
     "skills:link": "pnpm exec tsx tools/ensure-skills-links.ts",
     "cleanup:node-leaks": "sh scripts/cleanup-node-leaks.sh",
     "test:e2e:web": "pnpm --filter web test:e2e",
-    "skills:publish": "sh scripts/sync-skills.sh publish"
+    "skills:publish": "sh scripts/sync-skills.sh publish",
+    "sync:github-skills": "pnpm exec tsx tools/sync-github-skills.ts"
   },
   "pnpm": {
     "overrides": {
