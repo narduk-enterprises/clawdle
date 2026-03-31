@@ -67,8 +67,8 @@ function isHighlightedRow(i: number): boolean {
 
 function getDistributionBarClass(i: number) {
   return [
-    getDistCount(i) > 0 ? 'bg-indigo-500 dark:bg-indigo-600' : 'bg-slate-200 dark:bg-slate-700',
-    isHighlightedRow(i) ? '!bg-emerald-500 !dark:bg-emerald-500' : '',
+    getDistCount(i) > 0 ? 'bg-primary' : 'bg-muted',
+    isHighlightedRow(i) ? '!bg-success' : '',
   ]
 }
 
