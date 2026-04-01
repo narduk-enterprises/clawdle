@@ -4,7 +4,7 @@
   "private": true,
   "version": "1.11.14",
   "scripts": {
-    "build": "nuxt build",
+    "build": "node ../../tools/run-with-platform-secrets.mjs --app clawdle --environment prd --profile build -- sh -c 'nuxt build'",
     "dev": "(doppler run -- nuxt dev || nuxt dev)",
     "db:migrate": "bash ../../tools/db-migrate.sh clawdle-db --local --dir node_modules/@narduk-enterprises/narduk-nuxt-template-layer/drizzle --dir drizzle",
     "db:seed": "wrangler d1 execute clawdle-db --local --file=node_modules/@narduk-enterprises/narduk-nuxt-template-layer/drizzle/seed.sql",
