@@ -1,6 +1,6 @@
 export function usePlayerStats() {
-    return useFetch('/api/stats', {
-        immediate: false,
-        key: 'player-stats',
-    })
+  return useFetch('/api/stats', {
+    immediate: false,
+    key: 'player-stats',
+  })
 }

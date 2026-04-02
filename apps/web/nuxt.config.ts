@@ -40,7 +40,11 @@ const authProviders =
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   // Extend the published Narduk Nuxt Layer
-  extends: ['@narduk-enterprises/narduk-nuxt-template-layer'],
+  extends: [
+    '@narduk-enterprises/narduk-nuxt-template-layer-core',
+    '@narduk-enterprises/narduk-nuxt-template-layer-auth',
+    '@narduk-enterprises/narduk-nuxt-template-layer-analytics',
+  ],
 
   alias: {
     '#server/app-orm-tables': fileURLToPath(new URL(appOrmTablesEntry, import.meta.url)),
@@ -56,7 +60,7 @@ export default defineNuxtConfig({
   },
 
   future: {
-    compatibilityVersion: 4
+    compatibilityVersion: 4,
   },
 
   runtimeConfig: {
@@ -106,13 +110,14 @@ export default defineNuxtConfig({
       posthogProjectId: process.env.POSTHOG_PROJECT_ID || '',
       // IndexNow
       indexNowKey: process.env.INDEXNOW_KEY || '',
-    }
+    },
   },
 
   site: {
     url: process.env.SITE_URL || 'https://clawdle.nard.uk',
     name: 'Clawdle',
-    description: 'A daily word puzzle game. Guess the 5-letter word in 6 tries with color-coded clues. Play today\'s Clawdle!',
+    description:
+      "A daily word puzzle game. Guess the 5-letter word in 6 tries with color-coded clues. Play today's Clawdle!",
     defaultLocale: 'en',
   },
 

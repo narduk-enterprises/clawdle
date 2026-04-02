@@ -10,15 +10,20 @@ const emit = defineEmits<{
 const { gameState, getNextPuzzleTime, getShareText, startNewGame } = useGame()
 const toast = useToast()
 
-const modalTitle = computed(() => gameState.value.status === 'won' ? '🎉 You got it!' : '😿 Better luck next time')
+const modalTitle = computed(() =>
+  gameState.value.status === 'won' ? '🎉 You got it!' : '😿 Better luck next time',
+)
 
 const { data: stats, refresh } = await usePlayerStats()
 
-watch(() => props.open, async (isOpen) => {
-  if (isOpen) {
-    await refresh()
-  }
-})
+watch(
+  () => props.open,
+  async (isOpen) => {
+    if (isOpen) {
+      await refresh()
+    }
+  },
+)
 
 // Countdown timer
 const countdown = ref('')
@@ -32,15 +37,18 @@ function updateCountdown() {
   countdown.value = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
 }
 
-watch(() => props.open, (isOpen) => {
-  if (isOpen) {
-    updateCountdown()
-    countdownInterval = setInterval(updateCountdown, 1000)
-  } else if (countdownInterval) {
-    clearInterval(countdownInterval)
-    countdownInterval = null
-  }
-})
+watch(
+  () => props.open,
+  (isOpen) => {
+    if (isOpen) {
+      updateCountdown()
+      countdownInterval = setInterval(updateCountdown, 1000)
+    } else if (countdownInterval) {
+      clearInterval(countdownInterval)
+      countdownInterval = null
+    }
+  },
+)
 
 onUnmounted(() => {
   if (countdownInterval) clearInterval(countdownInterval)
@@ -97,10 +105,7 @@ function handleUpdateOpen(val: boolean) {
 </script>
 
 <template>
-  <UModal
-    :open="props.open"
-    @update:open="handleUpdateOpen"
-  >
+  <UModal :open="props.open" @update:open="handleUpdateOpen">
     <template #header>
       <h2 class="text-xl font-bold font-display text-center w-full">
         {{ modalTitle }}
@@ -111,21 +116,15 @@ function handleUpdateOpen(val: boolean) {
       <div class="space-y-5">
         <!-- Result -->
         <div v-if="gameState.status === 'lost'" class="text-center">
-          <p class="text-sm text-dimmed">
-            The word was
-          </p>
+          <p class="text-sm text-dimmed">The word was</p>
           <p class="text-2xl font-bold font-display uppercase tracking-widest text-primary">
             {{ gameState.answer }}
           </p>
         </div>
 
         <div v-if="gameState.status === 'won'" class="text-center">
-          <p class="text-sm text-dimmed">
-            Solved in
-          </p>
-          <p class="text-3xl font-bold font-display text-primary">
-            {{ gameState.attempts }}/6
-          </p>
+          <p class="text-sm text-dimmed">Solved in</p>
+          <p class="text-3xl font-bold font-display text-primary">{{ gameState.attempts }}/6</p>
         </div>
 
         <!-- Stats Summary -->
@@ -134,33 +133,25 @@ function handleUpdateOpen(val: boolean) {
             <div class="text-2xl font-bold font-display">
               {{ stats.gamesPlayed }}
             </div>
-            <div class="text-[10px] text-dimmed">
-              Played
-            </div>
+            <div class="text-[10px] text-dimmed">Played</div>
           </div>
           <div>
             <div class="text-2xl font-bold font-display">
               {{ stats.winPercentage }}
             </div>
-            <div class="text-[10px] text-dimmed">
-              Win %
-            </div>
+            <div class="text-[10px] text-dimmed">Win %</div>
           </div>
           <div>
             <div class="text-2xl font-bold font-display">
               {{ stats.currentStreak }}
             </div>
-            <div class="text-[10px] text-dimmed">
-              Current
-            </div>
+            <div class="text-[10px] text-dimmed">Current</div>
           </div>
           <div>
             <div class="text-2xl font-bold font-display">
               {{ stats.maxStreak }}
             </div>
-            <div class="text-[10px] text-dimmed">
-              Max
-            </div>
+            <div class="text-[10px] text-dimmed">Max</div>
           </div>
         </div>
 
@@ -172,11 +163,7 @@ function handleUpdateOpen(val: boolean) {
             Guess Distribution
           </h3>
           <div class="space-y-1">
-            <div
-              v-for="i in 6"
-              :key="i"
-              class="flex items-center gap-2"
-            >
+            <div v-for="i in 6" :key="i" class="flex items-center gap-2">
               <span class="w-3 text-xs font-bold text-dimmed">{{ i }}</span>
               <div
                 class="distribution-bar h-5 rounded-sm flex items-center justify-end px-1.5 text-xs font-bold text-white"
@@ -193,9 +180,7 @@ function handleUpdateOpen(val: boolean) {
 
         <!-- Next Puzzle Countdown -->
         <div class="text-center">
-          <p class="text-xs text-dimmed uppercase tracking-wider mb-1">
-            Next Clawdle
-          </p>
+          <p class="text-xs text-dimmed uppercase tracking-wider mb-1">Next Clawdle</p>
           <p class="text-2xl font-bold font-display tabular-nums">
             {{ countdown }}
           </p>

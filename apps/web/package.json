@@ -6,8 +6,8 @@
   "scripts": {
     "build": "node ../../tools/run-with-platform-secrets.mjs --app clawdle --environment prd --profile build -- sh -c 'nuxt build'",
     "dev": "(doppler run -- nuxt dev || nuxt dev)",
-    "db:migrate": "bash ../../tools/db-migrate.sh clawdle-db --local --dir node_modules/@narduk-enterprises/narduk-nuxt-template-layer/drizzle --dir drizzle",
-    "db:seed": "wrangler d1 execute clawdle-db --local --file=node_modules/@narduk-enterprises/narduk-nuxt-template-layer/drizzle/seed.sql",
+    "db:migrate": "bash ../../tools/db-migrate.sh clawdle-db --local --dir node_modules/@narduk-enterprises/narduk-nuxt-template-layer-core/drizzle --dir drizzle",
+    "db:seed": "wrangler d1 execute clawdle-db --local --file=node_modules/@narduk-enterprises/narduk-nuxt-template-layer-core/drizzle/seed.sql",
     "db:studio": "drizzle-kit studio",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
@@ -16,19 +16,21 @@
     "prelint": "test -f .nuxt/eslint.config.mjs || nuxt prepare",
     "lint": "eslint . --max-warnings 0",
     "quality": "echo 'Turbo dependsOn handles lint + typecheck + format:check'",
-    "db:reset": "bash ../../tools/db-migrate.sh clawdle-db --local --dir node_modules/@narduk-enterprises/narduk-nuxt-template-layer/drizzle --dir drizzle --reset && pnpm run db:seed",
+    "db:reset": "bash ../../tools/db-migrate.sh clawdle-db --local --dir node_modules/@narduk-enterprises/narduk-nuxt-template-layer-core/drizzle --dir drizzle --reset && pnpm run db:seed",
     "db:ready": "pnpm run db:migrate && pnpm run db:seed",
-    "db:verify": "node node_modules/@narduk-enterprises/narduk-nuxt-template-layer/testing/verify-local-db.mjs .",
+    "db:verify": "node node_modules/@narduk-enterprises/narduk-nuxt-template-layer-core/testing/verify-local-db.mjs .",
     "predev": "pnpm run db:ready"
   },
   "dependencies": {
-    "@narduk-enterprises/narduk-nuxt-template-layer": "workspace:*",
     "drizzle-orm": "^0.45.1",
     "nuxt": "^4.3.1",
     "zod": "^4.3.6",
     "@narduk-enterprises/eslint-config": "^1.0.17",
     "@supabase/auth-js": "^2.100.1",
-    "@supabase/supabase-js": "^2.100.1"
+    "@supabase/supabase-js": "^2.100.1",
+    "@narduk-enterprises/narduk-nuxt-template-layer-core": "^1.0.12",
+    "@narduk-enterprises/narduk-nuxt-template-layer-auth": "^1.0.12",
+    "@narduk-enterprises/narduk-nuxt-template-layer-analytics": "^1.0.12"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.0.0",

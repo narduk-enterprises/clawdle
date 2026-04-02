@@ -1,7 +1,10 @@
 <script setup lang="ts">
 const { board, currentRow, gameState, isRevealing, shakeRow, bounceRow } = useGame()
 
-function getTileState(row: number, col: number): 'empty' | 'tbd' | 'correct' | 'present' | 'absent' {
+function getTileState(
+  row: number,
+  col: number,
+): 'empty' | 'tbd' | 'correct' | 'present' | 'absent' {
   // Already submitted rows — use feedback
   if (row < gameState.value.guesses.length) {
     return gameState.value.guesses[row]!.feedback[col]!
@@ -29,10 +32,7 @@ function shouldBounce(row: number): boolean {
     <div
       v-for="(row, rowIdx) in board"
       :key="rowIdx"
-      :class="[
-        'flex gap-1.5 w-full justify-center',
-        shakeRow === rowIdx ? 'animate-shake' : '',
-      ]"
+      :class="['flex gap-1.5 w-full justify-center', shakeRow === rowIdx ? 'animate-shake' : '']"
     >
       <GameTile
         v-for="(letter, colIdx) in row"

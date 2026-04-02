@@ -13,14 +13,9 @@ function handleUpdateOpen(val: boolean) {
 </script>
 
 <template>
-  <UModal
-    :open="props.open"
-    @update:open="handleUpdateOpen"
-  >
+  <UModal :open="props.open" @update:open="handleUpdateOpen">
     <template #header>
-      <h2 class="text-xl font-bold font-display">
-        How To Play
-      </h2>
+      <h2 class="text-xl font-bold font-display">How To Play</h2>
     </template>
 
     <template #body>
@@ -37,7 +32,12 @@ function handleUpdateOpen(val: boolean) {
             <p class="font-semibold mb-2 text-default">Examples</p>
             <div class="flex gap-1.5 transform scale-75 origin-left sm:scale-100 mb-2">
               <GameTile letter="W" state="correct" />
-              <GameTile v-for="letter in ['E', 'A', 'R', 'Y']" :key="letter" :letter="letter" state="empty" />
+              <GameTile
+                v-for="letter in ['E', 'A', 'R', 'Y']"
+                :key="letter"
+                :letter="letter"
+                state="empty"
+              />
             </div>
             <p class="mt-1 text-xs">
               <strong class="text-default">W</strong> is in the word and in the correct spot.
@@ -48,7 +48,12 @@ function handleUpdateOpen(val: boolean) {
             <div class="flex gap-1.5 transform scale-75 origin-left sm:scale-100 mb-2">
               <GameTile letter="P" state="tbd" />
               <GameTile letter="I" state="present" />
-              <GameTile v-for="letter in ['L', 'L', 'S']" :key="letter" :letter="letter" :state="'tbd'" />
+              <GameTile
+                v-for="letter in ['L', 'L', 'S']"
+                :key="letter"
+                :letter="letter"
+                :state="'tbd'"
+              />
             </div>
             <p class="mt-1 text-xs">
               <strong class="text-default">I</strong> is in the word but in the wrong spot.
@@ -57,7 +62,12 @@ function handleUpdateOpen(val: boolean) {
 
           <div>
             <div class="flex gap-1.5 transform scale-75 origin-left sm:scale-100 mb-2">
-              <GameTile v-for="(letter, idx) in ['V', 'A', 'G', 'U', 'E']" :key="letter" :letter="letter" :state="idx === 3 ? 'absent' : 'tbd'" />
+              <GameTile
+                v-for="(letter, idx) in ['V', 'A', 'G', 'U', 'E']"
+                :key="letter"
+                :letter="letter"
+                :state="idx === 3 ? 'absent' : 'tbd'"
+              />
             </div>
             <p class="mt-1 text-xs">
               <strong class="text-default">U</strong> is not in the word in any spot.
@@ -67,9 +77,7 @@ function handleUpdateOpen(val: boolean) {
 
         <USeparator />
 
-        <p class="text-xs">
-          A new Clawdle is available each day!
-        </p>
+        <p class="text-xs">A new Clawdle is available each day!</p>
       </div>
     </template>
   </UModal>

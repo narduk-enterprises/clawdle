@@ -9,9 +9,12 @@ const emit = defineEmits<{
 
 const { data: stats, refresh } = await usePlayerStats()
 
-watch(() => props.open, async (isOpen) => {
-  if (isOpen) await refresh()
-})
+watch(
+  () => props.open,
+  async (isOpen) => {
+    if (isOpen) await refresh()
+  },
+)
 
 const maxDistribution = computed(() => {
   if (!stats.value) return 1
@@ -39,18 +42,12 @@ function getDistributionBarStyle(i: number) {
 function handleUpdateOpen(val: boolean) {
   emit('update:open', val)
 }
-
 </script>
 
 <template>
-  <UModal
-    :open="props.open"
-    @update:open="handleUpdateOpen"
-  >
+  <UModal :open="props.open" @update:open="handleUpdateOpen">
     <template #header>
-      <h2 class="text-xl font-bold font-display">
-        Statistics
-      </h2>
+      <h2 class="text-xl font-bold font-display">Statistics</h2>
     </template>
 
     <template #body>
@@ -61,33 +58,25 @@ function handleUpdateOpen(val: boolean) {
             <div class="text-3xl font-bold font-display">
               {{ stats.gamesPlayed }}
             </div>
-            <div class="text-xs text-dimmed">
-              Played
-            </div>
+            <div class="text-xs text-dimmed">Played</div>
           </div>
           <div>
             <div class="text-3xl font-bold font-display">
               {{ stats.winPercentage }}
             </div>
-            <div class="text-xs text-dimmed">
-              Win %
-            </div>
+            <div class="text-xs text-dimmed">Win %</div>
           </div>
           <div>
             <div class="text-3xl font-bold font-display">
               {{ stats.currentStreak }}
             </div>
-            <div class="text-xs text-dimmed">
-              Current Streak
-            </div>
+            <div class="text-xs text-dimmed">Current Streak</div>
           </div>
           <div>
             <div class="text-3xl font-bold font-display">
               {{ stats.maxStreak }}
             </div>
-            <div class="text-xs text-dimmed">
-              Max Streak
-            </div>
+            <div class="text-xs text-dimmed">Max Streak</div>
           </div>
         </div>
 
@@ -95,15 +84,9 @@ function handleUpdateOpen(val: boolean) {
 
         <!-- Guess Distribution -->
         <div>
-          <h3 class="text-sm font-semibold mb-3 text-muted">
-            Guess Distribution
-          </h3>
+          <h3 class="text-sm font-semibold mb-3 text-muted">Guess Distribution</h3>
           <div class="space-y-1">
-            <div
-              v-for="i in 6"
-              :key="i"
-              class="flex items-center gap-2"
-            >
+            <div v-for="i in 6" :key="i" class="flex items-center gap-2">
               <span class="w-3 text-xs font-bold text-dimmed">{{ i }}</span>
               <div
                 class="distribution-bar h-5 rounded-sm flex items-center justify-end px-1.5 text-xs font-bold text-white"
@@ -117,9 +100,7 @@ function handleUpdateOpen(val: boolean) {
         </div>
       </div>
 
-      <div v-else class="text-center py-8 text-dimmed">
-        Loading stats...
-      </div>
+      <div v-else class="text-center py-8 text-dimmed">Loading stats...</div>
     </template>
   </UModal>
 </template>

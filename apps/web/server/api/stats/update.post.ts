@@ -34,7 +34,14 @@ export default definePublicMutation(
     const stats = existing[0]
 
     if (!stats) {
-      const distribution: Record<string, number> = { '1': 0, '2': 0, '3': 0, '4': 0, '5': 0, '6': 0 }
+      const distribution: Record<string, number> = {
+        '1': 0,
+        '2': 0,
+        '3': 0,
+        '4': 0,
+        '5': 0,
+        '6': 0,
+      }
       if (status === 'won') {
         distribution[String(attempts)] = 1
       }

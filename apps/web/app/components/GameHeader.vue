@@ -9,7 +9,9 @@ const settings = useSettings()
 </script>
 
 <template>
-  <div class="flex items-center justify-between px-4 py-3 border-b border-default pt-[calc(0.75rem+env(safe-area-inset-top))] select-none">
+  <div
+    class="flex items-center justify-between px-4 py-3 border-b border-default pt-[calc(0.75rem+env(safe-area-inset-top))] select-none"
+  >
     <!-- Left: Help -->
     <div class="flex items-center gap-1">
       <UButton
@@ -23,11 +25,11 @@ const settings = useSettings()
     </div>
 
     <!-- Center: Title -->
-    <div class="flex items-center gap-2 hover:scale-105 transition-transform duration-300 cursor-default">
-      <img src="/favicon.svg" alt="" class="w-8 h-8 drop-shadow-sm" aria-hidden="true">
-      <h1 class="text-3xl font-bold font-display tracking-tight text-primary">
-        Clawdle
-      </h1>
+    <div
+      class="flex items-center gap-2 hover:scale-105 transition-transform duration-300 cursor-default"
+    >
+      <img src="/favicon.svg" alt="" class="w-8 h-8 drop-shadow-sm" aria-hidden="true" />
+      <h1 class="text-3xl font-bold font-display tracking-tight text-primary">Clawdle</h1>
     </div>
 
     <!-- Right: Stats & Settings -->

@@ -39,9 +39,7 @@ export default definePublicMutation(
       const result = await db
         .select()
         .from(gameSessions)
-        .where(
-          and(eq(gameSessions.id, sessionId), eq(gameSessions.playerId, playerId)),
-        )
+        .where(and(eq(gameSessions.id, sessionId), eq(gameSessions.playerId, playerId)))
         .limit(1)
       session = result[0]
     }
@@ -64,12 +62,7 @@ export default definePublicMutation(
         const existing = await db
           .select()
           .from(gameSessions)
-          .where(
-            and(
-              eq(gameSessions.playerId, playerId),
-              eq(gameSessions.wordId, todayWord.id),
-            ),
-          )
+          .where(and(eq(gameSessions.playerId, playerId), eq(gameSessions.wordId, todayWord.id)))
           .limit(1)
 
         if (existing[0]) {

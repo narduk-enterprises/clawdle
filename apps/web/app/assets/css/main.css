@@ -36,7 +36,6 @@
 }
 
 @keyframes shake {
-
   0%,
   100% {
     transform: translateX(0);
@@ -68,7 +67,6 @@
 }
 
 @keyframes bounce-tile {
-
   0%,
   100% {
     transform: translateY(0);
@@ -168,7 +166,8 @@
 }
 
 .tile-inner {
-  transition: background-color var(--transition-base),
+  transition:
+    background-color var(--transition-base),
     border-color var(--transition-base),
     color var(--transition-base);
 }
@@ -190,7 +189,9 @@
 /* ─── Keyboard ────────────────────────────────────────── */
 
 .keyboard-key {
-  transition: transform 80ms ease-out, background-color var(--transition-fast);
+  transition:
+    transform 80ms ease-out,
+    background-color var(--transition-fast);
   user-select: none;
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;

@@ -8,7 +8,8 @@ const props = defineProps<{
 }>()
 
 const tileClass = computed(() => {
-  const base = 'game-tile flex-1 aspect-square max-w-[4rem] sm:max-w-[4.5rem] text-3xl sm:text-4xl rounded-lg font-display font-bold select-none flex items-center justify-center leading-none transition-all duration-200 hover:scale-[1.06] hover:-translate-y-0.5'
+  const base =
+    'game-tile flex-1 aspect-square max-w-[4rem] sm:max-w-[4.5rem] text-3xl sm:text-4xl rounded-lg font-display font-bold select-none flex items-center justify-center leading-none transition-all duration-200 hover:scale-[1.06] hover:-translate-y-0.5'
   const states: Record<string, string> = {
     empty: 'border-2 border-gray-300 dark:border-gray-600',
     tbd: 'border-2 border-gray-500 dark:border-gray-400 text-gray-900 dark:text-white',
