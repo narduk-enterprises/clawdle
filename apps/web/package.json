@@ -4,7 +4,7 @@
   "private": true,
   "version": "1.11.14",
   "scripts": {
-    "build": "node ../../tools/run-with-platform-secrets.mjs --app clawdle --environment prd --profile build -- sh -c 'nuxt build'",
+    "build": "nuxt build",
     "dev": "(doppler run -- nuxt dev || nuxt dev)",
     "db:migrate": "bash ../../tools/db-migrate.sh clawdle-db --local --dir node_modules/@narduk-enterprises/narduk-nuxt-template-layer-core/drizzle --dir drizzle",
     "db:seed": "wrangler d1 execute clawdle-db --local --file=node_modules/@narduk-enterprises/narduk-nuxt-template-layer-core/drizzle/seed.sql",
@@ -12,7 +12,7 @@
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "typecheck": "nuxt typecheck",
-    "deploy": "node ../../tools/web-deploy.cjs",
+    "deploy": "pnpm exec wrangler deploy --env=\"\"",
     "prelint": "test -f .nuxt/eslint.config.mjs || nuxt prepare",
     "lint": "eslint . --max-warnings 0",
     "quality": "echo 'Turbo dependsOn handles lint + typecheck + format:check'",
@@ -28,9 +28,9 @@
     "@narduk-enterprises/eslint-config": "^1.0.17",
     "@supabase/auth-js": "^2.100.1",
     "@supabase/supabase-js": "^2.100.1",
-    "@narduk-enterprises/narduk-nuxt-template-layer-core": "^1.0.12",
-    "@narduk-enterprises/narduk-nuxt-template-layer-auth": "^1.0.12",
-    "@narduk-enterprises/narduk-nuxt-template-layer-analytics": "^1.0.12"
+    "@narduk-enterprises/narduk-nuxt-template-layer-core": "^1.0.16",
+    "@narduk-enterprises/narduk-nuxt-template-layer-auth": "^1.0.16",
+    "@narduk-enterprises/narduk-nuxt-template-layer-analytics": "^1.0.16"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.0.0",
