@@ -1,0 +1,17 @@
+{
+  "template": "narduk-template",
+  "version": "",
+  "templateSha": "e6c3ac06794797ebd7bda4d557c2151e4c6b71fb",
+  "syncedAt": "2026-04-16T18:49:26.327Z",
+  "layers": [],
+  "bundles": [
+    "seo",
+    "auth",
+    "analytics"
+  ],
+  "baseTheme": "balanced",
+  "appTemplate": null,
+  "syncHealth": {
+    "disabledChecks": []
+  }
+}

@@ -3,12 +3,21 @@
 # fixed ports. Anchors on REPO_ROOT (parent of scripts/) so derived apps only kill
 # processes whose argv contains that checkout path.
 #
-# Optional: NUXT_PORT — included in the port sweep (deduped with 3000).
+# Optional: NUXT_PORT — included in the port sweep. When unset, provision.json
+# localDev.nuxtPort is used before the 3000 fallback.
 # Optional: DEV_KILL_SKIP_PLAYWRIGHT_TREE=1 — do not walk Playwright child PIDs.
 set -e
 SCRIPT_DIR=$(CDPATH= cd -- "$(dirname "$0")" && pwd)
 REPO_ROOT=$(CDPATH= cd -- "$SCRIPT_DIR/.." && pwd)
 seeds=
+PROVISIONED_NUXT_PORT=''
+
+if [ -z "${NUXT_PORT:-}" ] && [ -f "$REPO_ROOT/provision.json" ]; then
+  PROVISIONED_NUXT_PORT=$(
+    node -e "const fs=require('node:fs'); try { const parsed=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); const port=parsed?.localDev?.nuxtPort; if (Number.isInteger(port) && port >= 1 && port <= 65535) process.stdout.write(String(port)); } catch {}" \
+      "$REPO_ROOT/provision.json"
+  )
+fi
 
 STAT_PORTS_CLEARED=0
 STAT_PORT_LINES=''
@@ -36,12 +45,18 @@ kill_port_listeners() {
   STAT_PORTS_CLEARED=0
   STAT_PORT_LINES=''
   for port in $1; do
-    pid=$(lsof -ti :"$port" 2>/dev/null) || true
-    if [ -n "$pid" ]; then
-      if kill "$pid" 2>/dev/null; then
-        STAT_PORTS_CLEARED=$((STAT_PORTS_CLEARED + 1))
-        STAT_PORT_LINES="${STAT_PORT_LINES}${port}	${pid}
+    pids=$(lsof -ti :"$port" 2>/dev/null) || true
+    if [ -n "$pids" ]; then
+      cleared_port=0
+      for pid in $pids; do
+        if kill "$pid" 2>/dev/null; then
+          cleared_port=1
+          STAT_PORT_LINES="${STAT_PORT_LINES}${port}	${pid}
 "
+        fi
+      done
+      if [ "$cleared_port" -eq 1 ]; then
+        STAT_PORTS_CLEARED=$((STAT_PORTS_CLEARED + 1))
       fi
     fi
   done
@@ -226,7 +241,8 @@ print_summary() {
 }
 
 # --- ports (web, showcase stack, common Vite HMR offsets) ---
-ports=$(dedupe_ports "${NUXT_PORT:-3000}" 3000 3010 3011 3012 3013 3014 3015 3016 \
+primary_port="${NUXT_PORT:-${PROVISIONED_NUXT_PORT:-3000}}"
+ports=$(dedupe_ports "$primary_port" ${PROVISIONED_NUXT_PORT:+$PROVISIONED_NUXT_PORT} 3000 3010 3011 3012 3013 3014 3015 3016 \
   24610 24611 24612 24613 24614 24615 24616 24617 24618 24619 24620 \
   24678 24679 24680 5173 5174 5175 8787 8788)
 kill_port_listeners "$ports"

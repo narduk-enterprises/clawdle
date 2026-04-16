@@ -18,8 +18,6 @@ COPY .npmrc ./
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY apps/web/package.json apps/web/package.json
 COPY apps/web/.npmrc apps/web/.npmrc
-COPY layers/narduk-nuxt-layer/package.json layers/narduk-nuxt-layer/package.json
-COPY packages/eslint-config/package.json packages/eslint-config/package.json
 
 # Package registry auth is mounted as a BuildKit secret so the token never
 # lands in build args, image metadata, or committed files.
@@ -29,10 +27,14 @@ RUN --mount=type=secret,id=registry_token,required=false \
   cp .npmrc "${temp_npmrc}"; \
   registry_url="$(awk -F= '/^@narduk-enterprises:registry=/{print $2; exit}' "${temp_npmrc}")"; \
   if [ -z "${registry_url}" ]; then \
-    registry_url='https://code.platform.nard.uk/api/packages/narduk-enterprises/npm/'; \
+    registry_url='https://npm.pkg.github.com'; \
   fi; \
   auth_host_path="${registry_url#https://}"; \
   auth_host_path="${auth_host_path#http://}"; \
+  case "${auth_host_path}" in \
+    */) ;; \
+    *) auth_host_path="${auth_host_path}/" ;; \
+  esac; \
   if [ -s /run/secrets/registry_token ]; then \
     printf '\n//%s:_authToken=%s\n' "$auth_host_path" "$(tr -d '\r\n' < /run/secrets/registry_token)" >> "${temp_npmrc}"; \
   fi; \
@@ -40,8 +42,6 @@ RUN --mount=type=secret,id=registry_token,required=false \
   rm -f "${temp_npmrc}"
 
 COPY apps/web apps/web
-COPY layers/narduk-nuxt-layer layers/narduk-nuxt-layer
-COPY packages/eslint-config packages/eslint-config
 COPY scripts scripts
 COPY tools tools
 
