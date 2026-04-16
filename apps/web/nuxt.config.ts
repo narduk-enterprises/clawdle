@@ -2,46 +2,31 @@
 import { fileURLToPath } from 'node:url'
 import { resolve, dirname } from 'node:path'
 
+import { resolveAuthEnvironment } from './auth-environment'
+
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
-const appBackendPreset =
-  process.env.APP_BACKEND_PRESET === 'managed-supabase' ? 'managed-supabase' : 'default'
-const supabaseUrl = process.env.AUTH_AUTHORITY_URL || process.env.SUPABASE_URL || ''
-const supabasePublishableKey =
-  process.env.SUPABASE_PUBLISHABLE_KEY ||
-  process.env.SUPABASE_ANON_KEY ||
-  process.env.SUPABASE_AUTH_ANON_KEY ||
-  ''
-const supabaseServiceRoleKey =
-  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_AUTH_SERVICE_ROLE_KEY || ''
-const configuredAuthBackend = process.env.AUTH_BACKEND
-const authBackend =
-  configuredAuthBackend === 'supabase' || configuredAuthBackend === 'local'
-    ? configuredAuthBackend
-    : supabaseUrl && supabasePublishableKey
-      ? 'supabase'
-      : 'local'
-const authAuthorityUrl = supabaseUrl
-
+const {
+  appBackendPreset,
+  authAuthorityUrl,
+  authBackend,
+  authProviders,
+  supabasePublishableKey,
+  supabaseServiceRoleKey,
+  supabaseUrl,
+} = resolveAuthEnvironment(process.env)
 const appOrmTablesEntry =
   process.env.NUXT_DATABASE_BACKEND === 'postgres'
     ? './server/database/pg-app-schema.ts'
     : './server/database/app-schema.ts'
 
-function parseAuthProviders(value: string | undefined) {
-  return (value || 'apple,email')
-    .split(',')
-    .map((provider) => provider.trim().toLowerCase())
-    .filter((provider, index, providers) => provider && providers.indexOf(provider) === index)
-}
-
-const authProviders =
-  authBackend === 'supabase' ? parseAuthProviders(process.env.AUTH_PROVIDERS) : ['email']
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   // Extend the published Narduk Nuxt Layer
   extends: [
+    '@narduk-enterprises/narduk-nuxt-template-layer-theme-balanced',
     '@narduk-enterprises/narduk-nuxt-template-layer-core',
+    '@narduk-enterprises/narduk-nuxt-template-layer-seo',
     '@narduk-enterprises/narduk-nuxt-template-layer-auth',
     '@narduk-enterprises/narduk-nuxt-template-layer-analytics',
   ],
@@ -96,6 +81,7 @@ export default defineNuxtConfig({
       authLogoutPath: '/logout',
       authRedirectPath: '/dashboard/',
       authProviders,
+      authEnforceCanonicalHost: process.env.AUTH_ENFORCE_CANONICAL_HOST === 'true',
       authPublicSignup: process.env.AUTH_PUBLIC_SIGNUP !== 'false',
       authRequireMfa: process.env.AUTH_REQUIRE_MFA === 'true',
       authTurnstileSiteKey: process.env.TURNSTILE_SITE_KEY || '',

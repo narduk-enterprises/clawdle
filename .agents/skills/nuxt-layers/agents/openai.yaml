@@ -1,0 +1,4 @@
+interface:
+  display_name: "Nuxt Layers"
+  short_description: "Guidance for Nuxt 4 layer authoring"
+  default_prompt: "Use $nuxt-layers to set up, extend, or debug a Nuxt 4 layer."

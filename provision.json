@@ -1,0 +1,64 @@
+{
+  "name": "clawdle",
+  "displayName": "Clawdle",
+  "shortDescription": "",
+  "description": "",
+  "url": "https://clawdle.nard.uk",
+  "provisionedAt": "",
+  "deployProfile": "cloudflare-web",
+  "migrationMode": "auto",
+  "templateLayer": {
+    "mode": "bundled",
+    "bundles": [
+      "seo",
+      "auth",
+      "analytics"
+    ]
+  },
+  "baseTheme": {
+    "id": "balanced"
+  },
+  "appTemplate": null,
+  "cloudflare": {
+    "workersBuilds": {
+      "rootDirectory": "/apps/web",
+      "skipDependencyInstall": true,
+      "previewUrls": true,
+      "requiredBuildSecrets": [
+        "NARDUK_PLATFORM_GH_PACKAGES_READ",
+        "NUXT_SESSION_PASSWORD",
+        "NUXT_OG_IMAGE_SECRET"
+      ],
+      "requiredRuntimeVariables": [
+        "SITE_URL",
+        "STAGING_SITE_URL",
+        "NUXT_SESSION_PASSWORD",
+        "NUXT_OG_IMAGE_SECRET"
+      ],
+      "targets": {
+        "production": {
+          "branch": "main",
+          "environmentName": "production",
+          "buildCommand": "pnpm run cf:build:production",
+          "deployCommand": "pnpm run cf:deploy"
+        },
+        "staging": {
+          "branch": "staging",
+          "environmentName": "staging",
+          "buildCommand": "pnpm run cf:build:staging",
+          "deployCommand": "pnpm run cf:deploy:staging"
+        }
+      },
+      "preview": {
+        "enabled": false,
+        "safeMode": true,
+        "buildCommand": "pnpm run cf:build:preview",
+        "deployCommand": "pnpm run cf:deploy:preview",
+        "branchExcludes": [
+          "main",
+          "staging"
+        ]
+      }
+    }
+  }
+}
