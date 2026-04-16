@@ -19,7 +19,10 @@
     "db:reset": "bash ../../tools/db-migrate.sh clawdle-db --local --dir node_modules/@narduk-enterprises/narduk-nuxt-template-layer-core/drizzle --dir drizzle --reset && pnpm run db:seed",
     "db:ready": "pnpm run db:migrate && pnpm run db:seed",
     "db:verify": "node node_modules/@narduk-enterprises/narduk-nuxt-template-layer-core/testing/verify-local-db.mjs .",
-    "predev": "pnpm run db:ready"
+    "predev": "pnpm run db:ready",
+    "cf:deploy": "pnpm exec narduk-fleet deploy deploy production",
+    "cf:deploy:staging": "pnpm exec narduk-fleet deploy deploy staging",
+    "cf:deploy:preview": "pnpm exec narduk-fleet deploy versions-upload preview"
   },
   "dependencies": {
     "drizzle-orm": "^0.45.1",
