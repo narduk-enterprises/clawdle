@@ -75,12 +75,13 @@
     "node": "22.22.0"
   },
   "devDependencies": {
+    "@narduk-enterprises/narduk-cli": "^1.18.1",
     "@playwright/test": "^1.49.0",
     "@types/node": "^22.19.13",
     "concurrently": "^9.2.1",
+    "prettier": "^3.8.1",
     "sharp": "^0.34.5",
-    "turbo": "^2.8.12",
     "tsx": "^4.21.0",
-    "prettier": "^3.8.1"
+    "turbo": "^2.8.12"
   }
 }
