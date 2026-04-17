@@ -17,7 +17,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url))
 const ROOT_DIR = join(__dirname, '..')
 const GIT_MAX_BUFFER = 64 * 1024 * 1024
 const TEMPLATE_REMOTE_URL =
-  'https://code.platform.nard.uk/narduk-enterprises/narduk-nuxt-template.git'
+  'https://github.com/narduk-enterprises/narduk-nuxt-template.git'
 
 const strict = process.argv.includes('--strict')
 
