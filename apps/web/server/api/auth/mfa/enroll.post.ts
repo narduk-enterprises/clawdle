@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import { defineUserMutation, withValidatedBody } from '#layer/server/utils/mutation'
 import { RATE_LIMIT_POLICIES } from '#layer/server/utils/rateLimit'
-import { enrollMfa } from '#server/utils/app-auth'
+import { enrollMfa } from '@narduk-enterprises/narduk-nuxt-template-layer-auth/server/utils/app-auth'
 
 const bodySchema = z.object({
   friendlyName: z.string().min(1).max(64).optional(),

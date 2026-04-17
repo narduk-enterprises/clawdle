@@ -31,5 +31,10 @@
       "id": "2641048c87814b19a2d2e016ba4e9a2c",
       "preview_id": "3e56a5e51b474eabb8e97c8f73f62c9f"
     }
+  ],
+  "tail_consumers": [
+    {
+      "service": "platform-runtime-logs"
+    }
   ]
 }

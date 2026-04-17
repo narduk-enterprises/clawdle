@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import { defineUserMutation, withValidatedBody } from '#layer/server/utils/mutation'
 import { RATE_LIMIT_POLICIES } from '#layer/server/utils/rateLimit'
-import { changePassword } from '#server/utils/app-auth'
+import { changePassword } from '@narduk-enterprises/narduk-nuxt-template-layer-auth/server/utils/app-auth'
 
 const bodySchema = z.object({
   currentPassword: z.string().min(1).optional(),

@@ -1,4 +1,4 @@
-import { useRefreshedSessionUser } from '#server/utils/session-user'
+import { useRefreshedSessionUser } from '@narduk-enterprises/narduk-nuxt-template-layer-auth/server/utils/session-user'
 
 export default defineEventHandler(async (event) => {
   const path = event.path

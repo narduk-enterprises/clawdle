@@ -1,8 +1,10 @@
-// Necessary: the Nuxt UI rule normalizes tag names to PascalCase, so native <ul> becomes "UL"
-// and is flagged as an unknown component. additionalComponents allows this false positive.
+// App-specific ESLint exceptions. Keep this list tight and justified.
 export default [
   {
-    files: ['**/*.vue'],
-    rules: { 'narduk/no-unknown-nuxt-ui-component': ['error', { additionalComponents: ['UL'] }] },
+    files: ['server/utils/dictionary.ts'],
+    rules: {
+      // Generated full word list for gameplay validation; line count tracks the dataset, not logic.
+      'narduk/file-size-budget': 'off',
+    },
   },
 ]
