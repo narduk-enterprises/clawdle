@@ -1,0 +1,4 @@
+interface:
+  display_name: "Audit Narduk Platform App"
+  short_description: "Audit a Narduk Nuxt fleet app."
+  default_prompt: "Use $audit-narduk-platform-app to audit this Narduk platform app for layer drift, guardrail compliance, and spec alignment."

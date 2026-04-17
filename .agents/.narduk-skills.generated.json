@@ -1,0 +1,17 @@
+{
+  "generatedAt": "2026-04-17T23:09:25.678Z",
+  "managedSkills": [
+    "audit-narduk-platform-app",
+    "build-feature",
+    "build-spec",
+    "generate-brand-identity",
+    "narduk-template-issues",
+    "nuxt-layers",
+    "nuxt-patterns",
+    "spec-product",
+    "spec-tech",
+    "spec-ui",
+    "spec-ux"
+  ],
+  "profiles": ["template-core"]
+}

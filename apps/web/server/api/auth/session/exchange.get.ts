@@ -1,6 +1,6 @@
 import { getRequestURL, sendRedirect } from 'h3'
 import { z } from 'zod'
-import { exchangeSupabaseCode } from '#server/utils/app-auth'
+import { exchangeSupabaseCode } from '@narduk-enterprises/narduk-nuxt-template-layer-auth/server/utils/app-auth'
 
 const querySchema = z.object({
   code: z.string().min(1),
