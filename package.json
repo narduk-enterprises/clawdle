@@ -75,7 +75,7 @@
     "node": "22.22.0"
   },
   "devDependencies": {
-    "@narduk-enterprises/narduk-cli": "^1.18.1",
+    "@narduk-enterprises/narduk-cli": "^1.18.6",
     "@playwright/test": "^1.49.0",
     "@types/node": "^22.19.13",
     "concurrently": "^9.2.1",
