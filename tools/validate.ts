@@ -16,10 +16,7 @@ import { runCommand } from './command'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const ROOT_DIR = path.resolve(__dirname, '..')
-const PACKAGE_REGISTRY_PROVIDER =
-  process.env.PACKAGE_REGISTRY_PROVIDER === 'github' ? 'github' : 'forgejo'
-const PACKAGE_REGISTRY_SECRET_KEY =
-  PACKAGE_REGISTRY_PROVIDER === 'forgejo' ? 'FORGEJO_TOKEN' : 'GITHUB_TOKEN_PACKAGES_READ'
+const PACKAGE_REGISTRY_SECRET_KEY = 'GITHUB_TOKEN_PACKAGES_READ'
 
 // Construct the template name from parts so string replacement can never corrupt it.
 const TEMPLATE_NAME = ['narduk', 'nuxt', 'template'].join('-')

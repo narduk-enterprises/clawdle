@@ -617,7 +617,7 @@ function syncGeneratedFiles(
       continue
     }
 
-    if (file === '.forgejo/workflows/deploy-main.yml') {
+    if (file === '.github/workflows/deploy-main.yml') {
       const appName = readProvisionMetadata(appDir).name || basename(appDir)
       writeTextFile(
         join(appDir, file),
@@ -708,8 +708,6 @@ function patchRootPackage(
           'test:e2e:mapkit',
           'ship',
           'quality:fleet',
-          'mirror:fleet:forgejo',
-          'mirror:fleet:forgejo:dry',
           'sync:fleet',
           'sync:fleet:fast',
           'sync:fleet:dry',

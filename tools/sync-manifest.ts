@@ -127,18 +127,15 @@ export const STALE_SYNC_PATHS = [
   '.github/workflows/sync-fleet.yml',
   'config/fleet-sync-repos.json',
   'config/fleet-app-dir-overrides.json',
-  '.forgejo/workflows/web-canary.yml',
+  '.github/workflows/deploy-main.yml',
   'tools/migrate-to-monorepo.ts',
   'tools/check-setup.js',
   'tools/fleet-git.ts',
-  'tools/mirror-fleet-to-forgejo.ts',
   'tools/run-remote-d1-migrate.mjs',
-  'tools/repair-forgejo-lockfile.mjs',
   'tools/web-deploy.cjs',
   'tools/tail.ts',
   'tools/ship.ts',
   'tools/validate-production-env.mjs',
-  'tools/verify-forgejo-package-source.mjs',
   'scripts/fleet-quality.sh',
   'scripts/fleet-status.sh',
   '.cursor/.DS_Store',
@@ -157,7 +154,7 @@ export const STALE_SYNC_PATHS = [
 
 export const GENERATED_SYNC_FILES = [
   '.github/workflows/ci.yml',
-  '.forgejo/workflows/deploy-main.yml',
+  '.github/workflows/deploy-main.yml',
 ] as const
 
 export const FLEET_ROOT_SCRIPT_PATCHES: Readonly<Record<string, string>> = {

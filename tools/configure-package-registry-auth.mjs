@@ -11,32 +11,15 @@ function stripTrailingSlash(value) {
   return value.replace(/\/+$/, '')
 }
 
-function normalizeProvider(value) {
-  return value === 'github' ? 'github' : 'forgejo'
-}
-
 function resolveRegistryConfig(env) {
-  const provider = normalizeProvider(env.PACKAGE_REGISTRY_PROVIDER)
-
-  if (provider === 'github') {
-    return {
-      provider,
-      registryUrl: 'https://npm.pkg.github.com',
-      token:
-        env.GITHUB_TOKEN_PACKAGES_READ?.trim() ||
-        env.GH_PACKAGES_TOKEN?.trim() ||
-        env.NODE_AUTH_TOKEN?.trim() ||
-        '',
-    }
-  }
-
-  const baseUrl = stripTrailingSlash(env.FLEET_FORGEJO_BASE_URL || 'https://code.platform.nard.uk')
-  const owner = (env.FLEET_FORGEJO_OWNER || 'narduk-enterprises').trim() || 'narduk-enterprises'
-
   return {
-    provider,
-    registryUrl: ensureTrailingSlash(`${baseUrl}/api/packages/${owner}/npm`),
-    token: env.FORGEJO_TOKEN?.trim() || env.NODE_AUTH_TOKEN?.trim() || '',
+    registryUrl: 'https://npm.pkg.github.com',
+    token:
+      env.GITHUB_TOKEN_PACKAGES_READ?.trim() ||
+      env.GH_PACKAGES_TOKEN?.trim() ||
+      env.GITHUB_TOKEN_PACKAGES_WRITE?.trim() ||
+      env.NODE_AUTH_TOKEN?.trim() ||
+      '',
   }
 }
 
@@ -58,7 +41,7 @@ function main() {
 
   if (!config.token) {
     console.error(
-      `[package-registry-auth] missing token for ${config.provider}; resolve platform secrets before running this step.`,
+      '[package-registry-auth] missing GitHub Packages token; resolve platform secrets before running this step.',
     )
     process.exit(1)
   }
@@ -84,7 +67,7 @@ function main() {
 
   retainedLines.push(authLine)
   writeFileSync(targetPath, `${retainedLines.join('\n').trimEnd()}\n`, 'utf8')
-  console.log(`[package-registry-auth] configured ${config.provider} auth in ${targetPath}`)
+  console.log(`[package-registry-auth] configured GitHub Packages auth in ${targetPath}`)
 }
 
 main()
